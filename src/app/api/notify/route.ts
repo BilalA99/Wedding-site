@@ -10,12 +10,14 @@ import { SaveTheDate } from '@/emails/SaveTheDate';
 import { PhotoSaveTheDate } from '@/emails/PhotoSaveTheDate';
 import { GenericTemplate } from '@/emails/GenericTemplate';
 import { PartialRsvpNudge } from '@/emails/PartialRsvpNudge';
+import { DeclinedRegistry } from '@/emails/DeclinedRegistry';
 
 const SUBJECTS: Record<string, string> = {
   'save-the-date':       'Save the Date — Yonatan & Saron · September 4, 2026',
   'save-the-date-48hr':  'Can You Confirm? — Yonatan & Saron · September 4, 2026',
   'formal-invitation':   'You are invited to the wedding of Yonatan & Saron',
   'partial-rsvp-nudge':  'One More RSVP Needed — Yonatan & Saron',
+  'declined-registry':   "We'll Miss You — Our Story & Registry · Yonatan & Saron",
   'rsvp-reminder':       'Reminder: RSVP by June 15th — Yonatan & Saron',
   'logistics-update':    'Wedding Week Details — Yonatan & Saron',
   'day-of-alert':        'Day-of Update — Yonatan & Saron',
@@ -34,7 +36,7 @@ const PWD = 'Matthew19:6';
 const COMPLIANCE = 'You are subscribed to receive wedding updates. Message frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to opt out.';
 
 function buildSmsBody(campaignId: string, guestName: string, partyId: string, inviteToken?: string): string {
-  const viewSuffix = campaignId === 'formal-invitation' ? '&view=final-invite' : '';
+  const viewSuffix = campaignId === 'formal-invitation' || campaignId === 'declined-registry' ? '&view=final-invite' : '';
   // The 48hr variant jumps straight to #rsvp — the original Save the Date
   // link is unchanged since it stays byte-identical to its send history.
   const hashSuffix = campaignId === 'save-the-date-48hr' ? '#rsvp' : '';
@@ -101,6 +103,23 @@ function buildSmsBody(campaignId: string, guestName: string, partyId: string, in
         `See Our Story & Details: ${magicLink}`,
         `Registry (Cash App, Venmo & Zelle): ${magicLink}#registry`,
         `Add to Calendar: ${BASE_URL}/api/calendar`,
+        '',
+        '---',
+        COMPLIANCE,
+      ].join('\n');
+
+    case 'declined-registry':
+      return [
+        'FROM YONATAN & SARON',
+        '',
+        `${guestName},`,
+        '',
+        "We were recently notified you won't be able to join us on September 4, 2026 — we completely understand, and we'll miss you.",
+        '',
+        "We'd still love for you to feel close to our story — come take a look:",
+        magicLink,
+        '',
+        `Registry: ${magicLink}#registry`,
         '',
         '---',
         COMPLIANCE,
@@ -398,6 +417,8 @@ export async function POST(req: Request) {
             acceptedNames: acceptedGuestNames,
             pendingNames: pendingGuestNames,
           }));
+        } else if (campaign.emailTemplate === 'DeclinedRegistry') {
+          html = await render(React.createElement(DeclinedRegistry, { guestName, partyId }));
         } else {
           const content = GENERIC_CONTENT[campaignId] || {
             heading: 'Update from Yonatan & Saron',
@@ -459,11 +480,14 @@ export async function POST(req: Request) {
         const inviteToken = (party as { invite_token?: string }).invite_token;
 
         // If they've already RSVPed, send a tailored acknowledgment instead of the campaign message
-        // — except partial-rsvp-nudge, which is specifically meant for already-responded parties
-        // with a newly added, still-pending guest.
+        // — except partial-rsvp-nudge (already-responded party with a newly added, still-pending
+        // guest) and declined-registry (deliberately targets already-declined parties), which both
+        // need their own dedicated copy instead of the generic recap.
         let smsBody: string;
         if (campaignId === 'partial-rsvp-nudge') {
           smsBody = buildPartialRsvpNudgeSmsBody(acceptedGuestNames, pendingGuestNames, partyId, inviteToken);
+        } else if (campaignId === 'declined-registry') {
+          smsBody = buildSmsBody(campaignId, guestName, partyId, inviteToken);
         } else if (party.has_responded) {
           const allGuests = party.guests as { name?: string; is_attending?: boolean; has_responded?: boolean }[];
           const attending = allGuests.filter(g => g.is_attending).map(g => g.name || '').filter(Boolean);
@@ -476,7 +500,7 @@ export async function POST(req: Request) {
         }
 
         const PRAY_IMAGE = 'https://foxezhxncpzzpbemdafa.supabase.co/storage/v1/object/public/wedding-ui/prayforus.JPG';
-        const smsMediaUrl = campaignId === 'partial-rsvp-nudge'
+        const smsMediaUrl = campaignId === 'partial-rsvp-nudge' || campaignId === 'declined-registry'
           ? (campaign.smsMediaUrl || null)
           : party.has_responded ? PRAY_IMAGE : (campaign.smsMediaUrl || null);
 

@@ -3,6 +3,7 @@ export type CampaignId =
   | 'save-the-date-48hr'
   | 'formal-invitation'
   | 'partial-rsvp-nudge'
+  | 'declined-registry'
   | 'rsvp-reminder'
   | 'logistics-update'
   | 'day-of-alert'
@@ -61,6 +62,17 @@ export const CAMPAIGNS: Campaign[] = [
     label: 'Partial RSVP Nudge (48hr)',
     smsBody: `RSVP UPDATE: Some of your party is confirmed for Yonatan & Saron's wedding on September 4, 2026, but we haven't heard from everyone yet. Can you confirm within 48 hours? ${SITE_LINK}\n\n${COMPLIANCE_FOOTER}`,
     emailTemplate: 'PartialRsvpNudge',
+    priority: 'both',
+    disabled: false,
+  },
+  {
+    // Sent to parties who declined but asked for registry info — content is
+    // built dynamically per-party in notify/route.ts, so this smsBody is
+    // just a representative placeholder, unused at send time.
+    id: 'declined-registry',
+    label: "Registry Info (Can't Make It)",
+    smsBody: `We were recently notified you won't be able to make it to Yonatan & Saron's wedding on September 4, 2026. We'd still love for you to be part of our story: ${SITE_LINK}&view=final-invite\n\nRegistry: ${SITE_LINK}&view=final-invite#registry\n\n${COMPLIANCE_FOOTER}`,
+    emailTemplate: 'DeclinedRegistry',
     priority: 'both',
     disabled: false,
   },
