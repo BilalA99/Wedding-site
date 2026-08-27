@@ -169,17 +169,28 @@ export async function POST(request: Request) {
 
     // Admin SMS alert — mirrors the admin email alert above but hits your
     // phone immediately instead of waiting on email delivery/checking inbox.
+    // Must be awaited: an un-awaited Twilio call can get cut off when a
+    // Vercel serverless function returns its response before the request
+    // finishes — the reliable pattern elsewhere in this route (buyer SMS,
+    // just above) always awaits inside a try/catch instead of firing and
+    // forgetting.
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      const adminSmsBody = [
-        `🎁 Gift Alert — ${data.name} ($${Number(data.price).toFixed(2)})`,
-        `From: ${name.trim()}`,
-        message?.trim() ? `Note: "${message.trim()}"` : null,
-      ].filter(Boolean).join('\n');
+      try {
+        const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+        const adminSmsBody = [
+          `🎁 Gift Alert — ${data.name} ($${Number(data.price).toFixed(2)})`,
+          `From: ${name.trim()}`,
+          message?.trim() ? `Note: "${message.trim()}"` : null,
+        ].filter(Boolean).join('\n');
 
-      twilioClient.messages
-        .create({ to: ADMIN_ALERT_PHONE, messagingServiceSid: TWILIO_MESSAGING_SERVICE_SID, body: adminSmsBody })
-        .catch((err) => console.error('Admin SMS alert failed (non-fatal):', err));
+        await twilioClient.messages.create({
+          to: ADMIN_ALERT_PHONE,
+          messagingServiceSid: TWILIO_MESSAGING_SERVICE_SID,
+          body: adminSmsBody,
+        });
+      } catch (err) {
+        console.error('Admin SMS alert failed (non-fatal):', err);
+      }
     }
 
     return NextResponse.json({
