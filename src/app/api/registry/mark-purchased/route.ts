@@ -181,7 +181,10 @@ export async function POST(request: Request) {
           `🎁 Gift Alert — ${data.name} ($${Number(data.price).toFixed(2)})`,
           `From: ${name.trim()}`,
           message?.trim() ? `Note: "${message.trim()}"` : null,
-        ].filter(Boolean).join('\n');
+          '',
+          '---',
+          'Msg & data rates may apply. Reply STOP to opt out.',
+        ].filter((line) => line !== null).join('\n');
 
         await twilioClient.messages.create({
           to: ADMIN_ALERT_PHONE,
