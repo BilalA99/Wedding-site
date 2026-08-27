@@ -1,13 +1,33 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import * as React from 'react';
 import { CashGiftAlert } from '@/emails/CashGiftAlert';
+import { CashGiftConfirmation } from '@/emails/CashGiftConfirmation';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'yonatanestifanos58850@gmail.com';
 
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
 export async function POST(request: Request) {
   try {
+    // /api is excluded from the site-wide password gate in middleware.ts, so
+    // this write needs its own check — see undo-purchase/route.ts.
+    const sitePassword = process.env.SITE_PASSWORD;
+    if (sitePassword) {
+      const accessToken = (await cookies()).get('site-access-token')?.value;
+      if (accessToken !== sitePassword) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const body = await request.json();
     const { name, email, message, giftType } = body as {
       name: string;
@@ -24,32 +44,62 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid gift type' }, { status: 400 });
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
-    }
+    const senderName = name.trim();
+    const senderEmail = email?.trim() || undefined;
+    const senderMessage = message?.trim() || undefined;
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const platform = giftType === 'cashapp' ? 'Cash App' : giftType === 'venmo' ? 'Venmo' : 'Zelle';
-
-    const html = await render(
-      React.createElement(CashGiftAlert, {
-        giftType,
-        senderName: name.trim(),
-        senderEmail: email?.trim() || undefined,
-        message: message?.trim() || undefined,
-      })
-    );
-
-    const { error } = await resend.emails.send({
-      from: 'Yonatan & Saron (No Reply) <wedding@theestifanos.com>',
-      to: ADMIN_EMAIL,
-      subject: `💸 Cash Gift via ${platform} — ${name.trim()}`,
-      html,
+    // Record the gift note itself (source of truth) before touching email —
+    // previously cash gifts left zero audit trail beyond a transient email.
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error: insertError } = await supabaseAdmin.from('cash_gifts').insert({
+      sender_name: senderName,
+      sender_email: senderEmail || null,
+      gift_type: giftType,
+      message: senderMessage || null,
     });
 
-    if (error) {
-      console.error('Resend error (cash gift alert):', error);
-      return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 });
+    if (insertError) {
+      console.error('Cash gift insert error:', insertError);
+      return NextResponse.json({ error: 'Failed to save gift note' }, { status: 500 });
+    }
+
+    // Notification emails are best-effort — the DB row above is what actually
+    // records the gift, so an email hiccup shouldn't fail the guest's request
+    // (matches mark-purchased's non-blocking pattern instead of hard-failing).
+    if (process.env.RESEND_API_KEY) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const platform = giftType === 'cashapp' ? 'Cash App' : giftType === 'venmo' ? 'Venmo' : 'Zelle';
+
+      render(
+        React.createElement(CashGiftAlert, {
+          giftType,
+          senderName,
+          senderEmail,
+          message: senderMessage,
+        })
+      ).then((html) =>
+        resend.emails.send({
+          from: 'Yonatan & Saron (No Reply) <wedding@theestifanos.com>',
+          to: ADMIN_EMAIL,
+          subject: `💸 Cash Gift via ${platform} — ${senderName}`,
+          html,
+        })
+      ).catch((err) => console.error('Cash gift admin alert failed (non-fatal):', err));
+
+      if (senderEmail) {
+        render(React.createElement(CashGiftConfirmation, { senderName }))
+          .then((html) =>
+            resend.emails.send({
+              from: 'Yonatan & Saron (No Reply) <wedding@theestifanos.com>',
+              to: senderEmail,
+              subject: 'Thank you for your gift — Yonatan & Saron',
+              html,
+            })
+          )
+          .catch((err) => console.error('Cash gift sender confirmation failed (non-fatal):', err));
+      }
+    } else {
+      console.error('RESEND_API_KEY is not set — cash gift notifications skipped');
     }
 
     return NextResponse.json({ success: true });
