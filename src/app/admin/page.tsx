@@ -11,6 +11,7 @@ interface Guest {
   id: string;
   name?: string;
   email?: string;
+  phone?: string;
   is_attending: boolean;
   has_responded: boolean;
   dietary_notes?: string;
@@ -49,6 +50,7 @@ interface EditableGuest {
   id?: string;
   name: string;
   email?: string;
+  phone?: string;
 }
 
 interface CsvRow {
@@ -279,7 +281,7 @@ export default function AdminDashboard() {
       .from('parties')
       .select(`
         *,
-        guests (id, name, email, is_attending, has_responded, dietary_notes),
+        guests (id, name, email, phone, is_attending, has_responded, dietary_notes),
         campaign_logs (campaign_id, channel, status)
       `)
       .order('updated_at', { ascending: false });
@@ -607,7 +609,7 @@ export default function AdminDashboard() {
     setPartyEmails(['']);
     setPartyPhones(['']);
     setPartyFamilySide('');
-    setGuests([{ name: '', email: '' }]);
+    setGuests([{ name: '', email: '', phone: '' }]);
     setShowModal(true);
   }
 
@@ -619,8 +621,8 @@ export default function AdminDashboard() {
     setPartyFamilySide(party.family_side || '');
     setGuests(
       party.guests.length > 0
-        ? party.guests.map(g => ({ id: g.id, name: g.name || '', email: g.email || '' }))
-        : [{ name: '', email: '' }]
+        ? party.guests.map(g => ({ id: g.id, name: g.name || '', email: g.email || '', phone: g.phone || '' }))
+        : [{ name: '', email: '', phone: '' }]
     );
     setShowModal(true);
   }
@@ -632,11 +634,11 @@ export default function AdminDashboard() {
     setPartyEmails(['']);
     setPartyPhones(['']);
     setPartyFamilySide('');
-    setGuests([{ name: '', email: '' }]);
+    setGuests([{ name: '', email: '', phone: '' }]);
   }
 
   function handleAddGuest() {
-    setGuests([...guests, { name: '', email: '' }]);
+    setGuests([...guests, { name: '', email: '', phone: '' }]);
   }
 
   function handleRemoveGuest(index: number) {
@@ -645,7 +647,7 @@ export default function AdminDashboard() {
     }
   }
 
-  function handleGuestChange(index: number, field: 'name' | 'email', value: string) {
+  function handleGuestChange(index: number, field: 'name' | 'email' | 'phone', value: string) {
     const updated = [...guests];
     updated[index][field] = value;
     setGuests(updated);
@@ -725,14 +727,16 @@ export default function AdminDashboard() {
         }
 
         for (const guest of validGuests.filter(g => g.id)) {
-          const sanitizedEmail = guest.email?.trim() && guest.email.trim() !== '---' 
-            ? guest.email.trim().toLowerCase() 
+          const sanitizedEmail = guest.email?.trim() && guest.email.trim() !== '---'
+            ? guest.email.trim().toLowerCase()
             : null;
+          const sanitizedPhone = guest.phone?.trim() || null;
           await supabase
             .from('guests')
-            .update({ 
+            .update({
               name: guest.name.trim(),
-              email: sanitizedEmail
+              email: sanitizedEmail,
+              phone: sanitizedPhone
             })
             .eq('id', guest.id!);
         }
@@ -741,13 +745,14 @@ export default function AdminDashboard() {
         if (newGuests.length > 0) {
           await supabase.from('guests').insert(
             newGuests.map(g => {
-              const sanitizedEmail = g.email?.trim() && g.email.trim() !== '---' 
-                ? g.email.trim().toLowerCase() 
+              const sanitizedEmail = g.email?.trim() && g.email.trim() !== '---'
+                ? g.email.trim().toLowerCase()
                 : null;
               return {
                 party_id: editingParty.id,
                 name: g.name.trim(),
                 email: sanitizedEmail,
+                phone: g.phone?.trim() || null,
                 is_attending: false,
               };
             })
@@ -795,13 +800,14 @@ export default function AdminDashboard() {
         }
 
         const guestInserts = validGuests.map(g => {
-          const sanitizedEmail = g.email?.trim() && g.email.trim() !== '---' 
-            ? g.email.trim().toLowerCase() 
+          const sanitizedEmail = g.email?.trim() && g.email.trim() !== '---'
+            ? g.email.trim().toLowerCase()
             : null;
           return {
             party_id: partyData.id,
             name: g.name.trim(),
             email: sanitizedEmail,
+            phone: g.phone?.trim() || null,
             is_attending: false,
           };
         });
@@ -1663,6 +1669,9 @@ export default function AdminDashboard() {
                                             {guest.email && (
                                               <span className="text-[10px] text-gray-400 italic">{guest.email}</span>
                                             )}
+                                            {guest.phone && (
+                                              <span className="text-[10px] text-gray-400 italic">{guest.phone}</span>
+                                            )}
                                           </div>
                                           <div className="flex items-center gap-2">
                                             {!guest.has_responded ? (
@@ -2105,6 +2114,13 @@ export default function AdminDashboard() {
                         value={guest.email || ''}
                         onChange={(e) => handleGuestChange(index, 'email', e.target.value)}
                         placeholder="Guest email (optional)"
+                        className="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-[#D4A845] bg-white text-black text-sm mb-2"
+                      />
+                      <input
+                        type="tel"
+                        value={guest.phone || ''}
+                        onChange={(e) => handleGuestChange(index, 'phone', e.target.value)}
+                        placeholder="Guest phone (optional — only if known to be theirs specifically)"
                         className="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-[#D4A845] bg-white text-black text-sm"
                       />
                     </div>
