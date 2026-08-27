@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
@@ -26,6 +27,16 @@ function toE164(raw: string): string | null {
 
 export async function POST(request: Request) {
   try {
+    // /api is excluded from the site-wide password gate in middleware.ts, so
+    // this service-role write needs its own check — see undo-purchase/route.ts.
+    const sitePassword = process.env.SITE_PASSWORD;
+    if (sitePassword) {
+      const accessToken = (await cookies()).get('site-access-token')?.value;
+      if (accessToken !== sitePassword) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const body = await request.json();
     const { id, name, email, phone, message } = body;

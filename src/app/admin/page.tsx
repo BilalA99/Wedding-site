@@ -1120,9 +1120,17 @@ export default function AdminDashboard() {
 
   async function handleTogglePurchased(item: RegistryItem) {
     try {
+      // Toggling back to unpurchased must clear any buyer info too — otherwise
+      // the item shows as available again while still carrying a stale name/
+      // email/phone from the previous purchase.
+      const nextPurchased = !item.is_purchased;
       const { error } = await supabase
         .from('registry_items')
-        .update({ is_purchased: !item.is_purchased })
+        .update(
+          nextPurchased
+            ? { is_purchased: true }
+            : { is_purchased: false, purchaser_name: null, purchaser_email: null, purchaser_phone: null, purchaser_message: null }
+        )
         .eq('id', item.id);
 
       if (error) throw error;

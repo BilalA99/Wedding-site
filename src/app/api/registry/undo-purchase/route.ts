@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 function getSupabaseAdmin() {
@@ -10,6 +11,18 @@ function getSupabaseAdmin() {
 
 export async function POST(request: Request) {
   try {
+    // This route bypasses RLS via the service-role client and /api is excluded
+    // from the site-wide password gate in middleware.ts, so it must check the
+    // site password itself — otherwise anyone who knows/guesses a registry_items
+    // id can anonymously wipe a real buyer's purchase.
+    const sitePassword = process.env.SITE_PASSWORD;
+    if (sitePassword) {
+      const accessToken = (await cookies()).get('site-access-token')?.value;
+      if (accessToken !== sitePassword) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const { id } = await request.json();
 
     if (!id) {
@@ -24,6 +37,7 @@ export async function POST(request: Request) {
         is_purchased: false,
         purchaser_name: null,
         purchaser_email: null,
+        purchaser_phone: null,
         purchaser_message: null,
       })
       .eq('id', id);

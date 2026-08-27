@@ -16,6 +16,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── /registry direct link: redirect to the hash before the auth gate ────
+  // /registry/page.tsx itself does redirect('/#registry'), which the browser
+  // turns into a second full navigation to "/" (fragments aren't sent to the
+  // server). Since site-entry-granted is single-use, that second navigation
+  // was consuming a fresh grant meant for THIS one, bouncing the guest back
+  // to /login in a loop even right after they'd just logged in. Rewriting
+  // the hash redirect here means only the second (already-normal) request to
+  // "/" ever needs to pass the gate.
+  if (pathname === '/registry') {
+    return NextResponse.redirect(new URL('/#registry', request.url));
+  }
+
   // ── Already authenticated: let them through regardless of query params ───
   const accessTokenEarly  = request.cookies.get('site-access-token')?.value;
   const entryGrantedEarly = request.cookies.get('site-entry-granted')?.value;
