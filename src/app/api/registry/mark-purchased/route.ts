@@ -9,6 +9,7 @@ import { RegistryPurchaseAlert } from '@/emails/RegistryPurchaseAlert';
 import { RegistryGiftConfirmation } from '@/emails/RegistryGiftConfirmation';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'yonatanestifanos58850@gmail.com';
+const ADMIN_ALERT_PHONE = '+17179635535';
 const TWILIO_MESSAGING_SERVICE_SID = 'MG0851f4936a77e5efd5c0f1d4b69eed14';
 
 function getSupabaseAdmin() {
@@ -164,6 +165,21 @@ export async function POST(request: Request) {
       } catch (smsErr) {
         console.error('Buyer SMS confirmation failed (non-fatal):', smsErr);
       }
+    }
+
+    // Admin SMS alert — mirrors the admin email alert above but hits your
+    // phone immediately instead of waiting on email delivery/checking inbox.
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const adminSmsBody = [
+        `🎁 Gift Alert — ${data.name} ($${Number(data.price).toFixed(2)})`,
+        `From: ${name.trim()}`,
+        message?.trim() ? `Note: "${message.trim()}"` : null,
+      ].filter(Boolean).join('\n');
+
+      twilioClient.messages
+        .create({ to: ADMIN_ALERT_PHONE, messagingServiceSid: TWILIO_MESSAGING_SERVICE_SID, body: adminSmsBody })
+        .catch((err) => console.error('Admin SMS alert failed (non-fatal):', err));
     }
 
     return NextResponse.json({
