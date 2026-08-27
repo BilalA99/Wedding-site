@@ -185,6 +185,8 @@
     "accept": "Accept",
     "decline": "Decline",
     "guestName": "Guest Full Name",
+    "guestPhoneLabel": "Their direct phone (optional)",
+    "guestPhonePlaceholder": "Only if different from the number below",
     "emailLabel": "Email Address",
     "emailPlaceholder": "your@email.com",
     "phoneLabel": "Phone Number",

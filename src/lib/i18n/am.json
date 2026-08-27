@@ -186,6 +186,8 @@
     "accept": "እገኛለሁ",
     "decline": "አልገኝም",
     "guestName": "የእንግዳ ሙሉ ስም",
+    "guestPhoneLabel": "የራሳቸው ስልክ ቁጥር (አማራጭ)",
+    "guestPhonePlaceholder": "ከታች ካለው ቁጥር የተለየ ከሆነ ብቻ",
     "emailLabel": "የኢሜይል አድራሻ",
     "emailPlaceholder": "your@email.com",
     "phoneLabel": "የስልክ ቁጥር",
