@@ -4,10 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import * as React from 'react';
+import twilio from 'twilio';
 import { CashGiftAlert } from '@/emails/CashGiftAlert';
 import { CashGiftConfirmation } from '@/emails/CashGiftConfirmation';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'yonatanestifanos58850@gmail.com';
+const ADMIN_ALERT_PHONE = '+17179635535';
+const TWILIO_MESSAGING_SERVICE_SID = 'MG0851f4936a77e5efd5c0f1d4b69eed14';
 
 function getSupabaseAdmin() {
   return createClient(
@@ -100,6 +103,22 @@ export async function POST(request: Request) {
       }
     } else {
       console.error('RESEND_API_KEY is not set — cash gift notifications skipped');
+    }
+
+    // Admin SMS alert — mirrors the admin email alert above but hits your
+    // phone immediately instead of waiting on email delivery/checking inbox.
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      const platform = giftType === 'cashapp' ? 'Cash App' : giftType === 'venmo' ? 'Venmo' : 'Zelle';
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const adminSmsBody = [
+        `💸 Cash Gift Alert — via ${platform}`,
+        `From: ${senderName}`,
+        senderMessage ? `Note: "${senderMessage}"` : null,
+      ].filter(Boolean).join('\n');
+
+      twilioClient.messages
+        .create({ to: ADMIN_ALERT_PHONE, messagingServiceSid: TWILIO_MESSAGING_SERVICE_SID, body: adminSmsBody })
+        .catch((err) => console.error('Admin SMS alert failed (non-fatal):', err));
     }
 
     return NextResponse.json({ success: true });
