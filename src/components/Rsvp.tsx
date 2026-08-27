@@ -41,6 +41,7 @@ interface Guest {
   name: string;
   is_attending: boolean;
   is_plus_one: boolean;
+  phone?: string;
 }
 
 interface Party {
@@ -361,6 +362,12 @@ function FormScreen({
     );
   };
 
+  const handleGuestPhoneChange = (index: number, newPhone: string) => {
+    setGuests((prev) =>
+      prev.map((g, i) => (i === index ? { ...g, phone: newPhone } : g))
+    );
+  };
+
   const validateForm = (): string | null => {
     // Check for empty guest list
     if (!guests || guests.length === 0) {
@@ -556,6 +563,24 @@ function FormScreen({
                     onChange={(e) => handleNameChange(idx, e.target.value)}
                     className={`w-full bg-transparent border-b border-hairline text-sm py-1 outline-none text-stone-200 placeholder:italic placeholder:text-stone-600 focus:border-ink/50 transition-colors duration-300 ${isAmharic ? 'font-ethiopic font-light' : 'font-serif'}`}
                   />
+                )}
+
+                {/* Optional direct phone for this specific guest — separate from
+                    the required submitter contact fields below, since a family
+                    submission's shared phone often isn't every attendee's own. */}
+                {touchedGuests.has(idx) && guest.is_attending && (
+                  <div className="flex flex-col gap-1">
+                    <label className={`text-[10px] tracking-widest uppercase text-stone-500 ${isAmharic ? 'font-ethiopic normal-case tracking-normal' : 'font-sans'}`}>
+                      {t('rsvp.guestPhoneLabel')}
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder={t('rsvp.guestPhonePlaceholder')}
+                      value={guest.phone || ''}
+                      onChange={(e) => handleGuestPhoneChange(idx, e.target.value)}
+                      className={`w-full bg-transparent border-b border-hairline text-sm py-1 outline-none text-stone-200 placeholder:italic placeholder:text-stone-600 focus:border-ink/50 transition-colors duration-300 ${isAmharic ? 'font-ethiopic font-light' : 'font-serif'}`}
+                    />
+                  </div>
                 )}
               </div>
             ))}

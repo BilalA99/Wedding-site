@@ -92,11 +92,12 @@ export async function POST(req: Request) {
 
       const { error: guestError } = await supabaseAdmin.rpc('update_guests_for_party', {
         p_party_id: party_id,
-        p_guests: guests.map((g: { id: string; is_attending: boolean; name: string; dietary_notes?: string }) => ({
+        p_guests: guests.map((g: { id: string; is_attending: boolean; name: string; dietary_notes?: string; phone?: string }) => ({
           id: g.id,
           is_attending: g.is_attending,
           name: g.name,
-          dietary_notes: g.dietary_notes
+          dietary_notes: g.dietary_notes,
+          phone: g.phone?.trim() || null
         }))
       });
 
