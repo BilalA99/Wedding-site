@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import Image from 'next/image';
 import { JourneyItem } from './journeyData';
 import { useLanguage } from '@/context/LanguageContext';
+import { useOpacitySettle } from '@/hooks/useOpacitySettle';
 
 interface JourneyCardProps {
   item: JourneyItem;
@@ -65,6 +66,16 @@ export default function JourneyCard({ item, index }: JourneyCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isLeft = index % 2 === 0;
   const isInView = useInView(cardRef, { once: true, amount: 0.25 });
+
+  // Watchdog against these scroll-reveal opacity tweens getting stuck
+  // mid-fade under heavy fast-scroll main-thread work — see useOpacitySettle.
+  const dotRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  useOpacitySettle(dotRef, isInView, 1000);
+  useOpacitySettle(frameRef, isInView, 1500);
+  useOpacitySettle(textRef, isInView, 1800);
+
   const { language } = useLanguage();
   const isAmharic = language === 'am';
 
@@ -92,6 +103,7 @@ export default function JourneyCard({ item, index }: JourneyCardProps) {
       {/* Thread dot — mobile: left edge, desktop: horizontal center */}
       <div className="absolute left-6 top-7 md:left-1/2 md:-translate-x-1/2 z-10">
         <motion.div
+          ref={dotRef}
           initial={{ scale: 0, opacity: 0 }}
           animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
@@ -107,6 +119,7 @@ export default function JourneyCard({ item, index }: JourneyCardProps) {
         }`}
       >
         <motion.div
+          ref={frameRef}
           initial={{ opacity: 0, x: isLeft ? -30 : 30 }}
           animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: isLeft ? -30 : 30 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
@@ -176,6 +189,7 @@ export default function JourneyCard({ item, index }: JourneyCardProps) {
         }`}
       >
         <motion.div
+          ref={textRef}
           initial={{ opacity: 0, filter: 'blur(10px)', x: isLeft ? 30 : -30 }}
           animate={
             isInView

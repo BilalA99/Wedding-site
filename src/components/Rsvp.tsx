@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { useLanguage } from '@/context/LanguageContext';
 import { useNavView } from '@/context/ViewContext';
+import { useOpacitySettle } from '@/hooks/useOpacitySettle';
 
 // ============================================================================
 // COOKIE HELPERS
@@ -346,6 +347,12 @@ function FormScreen({
 
   // Ref to prevent double-submission (synchronous check before React state updates)
   const isSubmittingRef = useRef(false);
+
+  // Watchdog against the scroll-reveal opacity occasionally getting stuck
+  // mid-fade under heavy fast-scroll main-thread work — see useOpacitySettle.
+  const revealRef = useRef<HTMLDivElement>(null);
+  const revealInView = useInView(revealRef, { once: true, margin: '-80px' });
+  useOpacitySettle(revealRef, revealInView, 1500);
 
   const toggleGuest = (index: number, attending: boolean) => {
     setGuests((prev) =>
@@ -839,6 +846,7 @@ export default function Rsvp() {
     <section className="relative min-h-screen w-full">
       <div className="relative z-10 flex flex-col items-center pt-60 md:pt-64 pb-48 px-6 min-h-screen">
         <motion.div
+          ref={revealRef}
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}

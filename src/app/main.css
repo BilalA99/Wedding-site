@@ -89,6 +89,11 @@ body {
   font-family: var(--font-inter), sans-serif;
   min-height: 100vh;
   transition: background-color 0.6s ease, color 0.6s ease;
+  /* Clears the fixed FloatingNav pill so content at the natural end of any
+     page's scroll (e.g. /legal's SMS Terms list, the Journey timeline's last
+     card) can always be scrolled fully into view above it, not stuck
+     permanently behind it. */
+  padding-bottom: calc(140px + env(safe-area-inset-bottom));
 }
 
 h1, h2, h3, h4, h5, h6 {
