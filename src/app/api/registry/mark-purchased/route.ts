@@ -130,7 +130,9 @@ export async function POST(request: Request) {
     }
 
     // Buyer SMS confirmation
-    if (normalizedPhone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    if (!normalizedPhone) {
+      console.error(`Buyer SMS confirmation skipped — unparseable phone number: "${phone.trim()}"`);
+    } else if (normalizedPhone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
       try {
         const twilioClient = twilio(
           process.env.TWILIO_ACCOUNT_SID,
