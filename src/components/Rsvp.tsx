@@ -348,12 +348,6 @@ function FormScreen({
   // Ref to prevent double-submission (synchronous check before React state updates)
   const isSubmittingRef = useRef(false);
 
-  // Watchdog against the scroll-reveal opacity occasionally getting stuck
-  // mid-fade under heavy fast-scroll main-thread work — see useOpacitySettle.
-  const revealRef = useRef<HTMLDivElement>(null);
-  const revealInView = useInView(revealRef, { once: true, margin: '-80px' });
-  useOpacitySettle(revealRef, revealInView, 1500);
-
   const toggleGuest = (index: number, attending: boolean) => {
     setGuests((prev) =>
       prev.map((g, i) => (i === index ? { ...g, is_attending: attending } : g))
@@ -792,6 +786,12 @@ export default function Rsvp() {
   const { t, language } = useLanguage();
   const { activeView } = useNavView();
   const isAmharic = language === 'am';
+
+  // Watchdog against the scroll-reveal opacity occasionally getting stuck
+  // mid-fade under heavy fast-scroll main-thread work — see useOpacitySettle.
+  const revealRef = useRef<HTMLDivElement>(null);
+  const revealInView = useInView(revealRef, { once: true, margin: '-80px' });
+  useOpacitySettle(revealRef, revealInView, 1500);
 
   // On mount: if a vip_party_id cookie exists, skip search and load the party directly
   useEffect(() => {
