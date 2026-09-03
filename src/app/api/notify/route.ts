@@ -37,7 +37,7 @@ const PWD = 'Matthew19:6';
 const COMPLIANCE = 'You are subscribed to receive wedding updates. Message frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to opt out.';
 
 function buildSmsBody(campaignId: string, guestName: string, partyId: string, inviteToken?: string): string {
-  const viewSuffix = campaignId === 'formal-invitation' || campaignId === 'declined-registry' ? '&view=final-invite' : '';
+  const viewSuffix = campaignId === 'formal-invitation' || campaignId === 'declined-registry' || campaignId === 'day-before-alert' ? '&view=final-invite' : '';
   // The 48hr variant jumps straight to #rsvp — the original Save the Date
   // link is unchanged since it stays byte-identical to its send history.
   const hashSuffix = campaignId === 'save-the-date-48hr' ? '#rsvp' : '';
@@ -447,11 +447,19 @@ export async function POST(req: Request) {
             heading: 'Update from Yonatan & Saron',
             body: 'Visit our website for the latest details.',
           };
+          // day-before-alert must land guests back on the full final-invite
+          // site (light theme, day-of details) rather than the dark
+          // Save the Date landing GenericTemplate's default link points to —
+          // see the matching viewSuffix fix in buildSmsBody above.
+          const ctaLink = campaignId === 'day-before-alert'
+            ? (partyId ? `${BASE_URL}/i/${partyId}?view=final-invite` : `${BASE_URL}/?pwd=${PWD}&view=final-invite`)
+            : undefined;
           html = await render(
             React.createElement(GenericTemplate, {
               heading: content.heading,
               body: `Dear ${guestName}, ${content.body}`,
               partyId,
+              ctaLink,
             })
           );
         }
