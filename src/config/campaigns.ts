@@ -6,6 +6,7 @@ export type CampaignId =
   | 'declined-registry'
   | 'rsvp-reminder'
   | 'logistics-update'
+  | 'day-before-alert'
   | 'day-of-alert'
   | 'thank-you';
 
@@ -93,6 +94,14 @@ export const CAMPAIGNS: Campaign[] = [
     emailTemplate: 'GenericTemplate',
     priority: 'both',
     disabled: true,
+  },
+  {
+    id: 'day-before-alert',
+    label: 'Day-Before Alert (Weather)',
+    smsBody: `The day before! We are SO excited to celebrate with you tomorrow. Heads up: we're expecting a bit of rain throughout the day — just in case, bring a poncho for the ceremony. We'll keep you posted if anything changes. See ${SITE_LINK}\n\n${COMPLIANCE_FOOTER}`,
+    emailTemplate: 'GenericTemplate',
+    priority: 'both',
+    disabled: false,
   },
   {
     id: 'day-of-alert',

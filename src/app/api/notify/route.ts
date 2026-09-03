@@ -20,6 +20,7 @@ const SUBJECTS: Record<string, string> = {
   'declined-registry':   "We'll Miss You — Our Story & Registry · Yonatan & Saron",
   'rsvp-reminder':       'Reminder: RSVP by June 15th — Yonatan & Saron',
   'logistics-update':    'Wedding Week Details — Yonatan & Saron',
+  'day-before-alert':    "Tomorrow's the Day — Weather Update · Yonatan & Saron",
   'day-of-alert':        'Day-of Update — Yonatan & Saron',
   'thank-you':           'Thank You — Yonatan & Saron',
 };
@@ -155,6 +156,24 @@ function buildSmsBody(campaignId: string, guestName: string, partyId: string, in
         COMPLIANCE,
       ].join('\n');
 
+    case 'day-before-alert':
+      return [
+        'THE DAY BEFORE!',
+        '',
+        'Yonatan & Saron',
+        '',
+        `${guestName},`,
+        '',
+        "We are SO excited to celebrate with you tomorrow — it's really happening!",
+        '',
+        "One quick heads up: we're expecting a bit of rain throughout the day. Just in case, we'd recommend bringing a poncho for the ceremony. We'll keep you posted if anything changes.",
+        '',
+        `See you tomorrow: ${magicLink}`,
+        '',
+        '---',
+        COMPLIANCE,
+      ].join('\n');
+
     case 'day-of-alert':
       return [
         'TODAY IS THE DAY!',
@@ -285,6 +304,10 @@ const GENERIC_CONTENT: Record<string, { heading: string; body: string }> = {
   'logistics-update': {
     heading: 'Wedding Week Logistics',
     body: 'Here are the details you\'ll need for the big weekend. Visit our website for parking, hotel accommodations, and the full day-of schedule.',
+  },
+  'day-before-alert': {
+    heading: 'We\'ll See You Tomorrow!',
+    body: 'We are overjoyed — tomorrow is finally here, and we cannot wait to celebrate with you. One small note: we\'re anticipating some rain throughout the day, so just in case, we\'d recommend bringing a poncho for the ceremony. We\'ll keep you updated if anything changes. See you soon!',
   },
   'day-of-alert': {
     heading: 'Today is the Day!',
