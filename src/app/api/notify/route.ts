@@ -504,12 +504,14 @@ export async function POST(req: Request) {
 
         // If they've already RSVPed, send a tailored acknowledgment instead of the campaign message
         // — except partial-rsvp-nudge (already-responded party with a newly added, still-pending
-        // guest) and declined-registry (deliberately targets already-declined parties), which both
-        // need their own dedicated copy instead of the generic recap.
+        // guest), declined-registry (deliberately targets already-declined parties), and
+        // day-before-alert (a post-RSVP logistics update meant to reach confirmed guests
+        // unchanged, not get swapped for the RSVP recap), which all need their own dedicated
+        // copy instead of the generic recap.
         let smsBody: string;
         if (campaignId === 'partial-rsvp-nudge') {
           smsBody = buildPartialRsvpNudgeSmsBody(acceptedGuestNames, pendingGuestNames, partyId, inviteToken);
-        } else if (campaignId === 'declined-registry') {
+        } else if (campaignId === 'declined-registry' || campaignId === 'day-before-alert') {
           smsBody = buildSmsBody(campaignId, guestName, partyId, inviteToken);
         } else if (party.has_responded) {
           const allGuests = party.guests as { name?: string; is_attending?: boolean; has_responded?: boolean }[];
@@ -523,7 +525,7 @@ export async function POST(req: Request) {
         }
 
         const PRAY_IMAGE = 'https://foxezhxncpzzpbemdafa.supabase.co/storage/v1/object/public/wedding-ui/prayforus.JPG';
-        const smsMediaUrl = campaignId === 'partial-rsvp-nudge' || campaignId === 'declined-registry'
+        const smsMediaUrl = campaignId === 'partial-rsvp-nudge' || campaignId === 'declined-registry' || campaignId === 'day-before-alert'
           ? (campaign.smsMediaUrl || null)
           : party.has_responded ? PRAY_IMAGE : (campaign.smsMediaUrl || null);
 
