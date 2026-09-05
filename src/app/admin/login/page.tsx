@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       return;
     }
     setStage("code");
-    setNotice("Check your inbox for a 6-digit code.");
+    setNotice("Check your inbox for a sign-in code.");
   };
 
   const verifyCode = async (e: React.FormEvent) => {
@@ -89,14 +89,14 @@ export default function AdminLoginPage() {
               htmlFor="admin-code"
               className="type-caps text-[0.65rem] text-sand"
             >
-              6-digit code
+              Sign-in code
             </label>
             <input
               id="admin-code"
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              maxLength={6}
+              maxLength={10}
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
