@@ -32,6 +32,9 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     type: "website",
+    url: "/",
+    siteName: "Bilal Ahmad & Jennah Samhan",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
