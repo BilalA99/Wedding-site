@@ -138,6 +138,18 @@ body {
   }
 }
 
+/* Decorative hero video: never show WebKit's native start-playback overlay.
+   If iOS suspends autoplay (Low Power Mode), the poster shows clean linen
+   and playback begins on the visitor's first tap instead. */
+.hero-video::-webkit-media-controls-start-playback-button,
+.hero-video::-webkit-media-controls-play-button,
+.hero-video::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0;
+}
+
 /* Sound bars */
 @keyframes sound-bar {
   0%,

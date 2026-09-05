@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   motion,
   useReducedMotion,
@@ -47,6 +47,47 @@ function LineReveal({
 export function Hero() {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // iOS suspends video autoplay in Low Power / Data Saver mode (and React's
+  // server HTML can omit the muted attribute, which also trips autoplay
+  // policy). Force muted via the ref, try to play on mount, and retry on the
+  // visitor's first interaction — mirroring the music recovery — so nobody
+  // ever has to hunt for a play control.
+  useEffect(() => {
+    if (reducedMotion) return;
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+
+    const listeners: Array<[string, EventListener]> = [];
+    const removeListeners = () => {
+      for (const [type, fn] of listeners) window.removeEventListener(type, fn);
+      listeners.length = 0;
+    };
+    const tryPlay = () => {
+      el.play()
+        .then(() => removeListeners())
+        .catch(() => {});
+    };
+
+    tryPlay();
+    for (const type of ["pointerdown", "touchstart", "keydown"]) {
+      const fn: EventListener = () => tryPlay();
+      window.addEventListener(type, fn, { passive: true });
+      listeners.push([type, fn]);
+    }
+    const onVisibility = () => {
+      if (!document.hidden && el.paused) tryPlay();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      removeListeners();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [reducedMotion]);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -83,7 +124,8 @@ export function Hero() {
           />
         ) : (
           <video
-            className="h-full w-full object-cover"
+            ref={videoRef}
+            className="hero-video h-full w-full object-cover"
             poster={POSTER_PATH}
             autoPlay
             muted
@@ -91,6 +133,7 @@ export function Hero() {
             playsInline
             preload="auto"
             tabIndex={-1}
+            disablePictureInPicture
           >
             <source media="(min-width: 768px)" src={VIDEO_PATH} />
             <source src={VIDEO_MOBILE_PATH} />
