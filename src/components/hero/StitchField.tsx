@@ -91,7 +91,7 @@ function StitchInstances({ count }: StitchInstancesProps) {
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-      <planeGeometry args={[0.018, 0.28]}>
+      <planeGeometry args={[0.016, 0.24]}>
         <instancedBufferAttribute
           attach="attributes-color"
           args={[colors, 3]}
@@ -100,7 +100,7 @@ function StitchInstances({ count }: StitchInstancesProps) {
       <meshBasicMaterial
         vertexColors
         transparent
-        opacity={0.4}
+        opacity={0.3}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />

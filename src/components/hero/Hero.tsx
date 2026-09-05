@@ -56,7 +56,7 @@ export function Hero() {
         const memory =
           (navigator as Navigator & { deviceMemory?: number }).deviceMemory ??
           4;
-        setParticleCount(coarse ? (memory <= 4 ? 60 : 90) : 220);
+        setParticleCount(coarse ? (memory <= 4 ? 60 : 90) : 170);
         setWebglOk(true);
       } catch {
         // fall back to the static hero
