@@ -8,7 +8,11 @@ import {
   useTransform,
 } from "motion/react";
 
-import { POSTER_PATH, VIDEO_PATH } from "@/config/wedding";
+import {
+  POSTER_PATH,
+  VIDEO_MOBILE_PATH,
+  VIDEO_PATH,
+} from "@/config/wedding";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -67,19 +71,19 @@ export function Hero() {
         style={reducedMotion ? undefined : { y: videoY }}
         aria-hidden="true"
       >
-        {/* Portrait phones crop the 16:9 frame to its blank center, so the
-            left embroidery column is pinned into view below md. */}
+        {/* A dedicated 9:16 encode serves portrait screens; wide screens get
+            the 16:9 master. Both open and close on the same blank linen, so
+            one poster covers both without a visible switch. */}
         {reducedMotion ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={POSTER_PATH}
             alt=""
-            className="h-full w-full object-cover object-[12%_50%] md:object-center"
+            className="h-full w-full object-cover"
           />
         ) : (
           <video
-            className="h-full w-full object-cover object-[12%_50%] md:object-center"
-            src={VIDEO_PATH}
+            className="h-full w-full object-cover"
             poster={POSTER_PATH}
             autoPlay
             muted
@@ -87,7 +91,10 @@ export function Hero() {
             playsInline
             preload="auto"
             tabIndex={-1}
-          />
+          >
+            <source media="(min-width: 768px)" src={VIDEO_PATH} />
+            <source src={VIDEO_MOBILE_PATH} />
+          </video>
         )}
         {/* Soft radial wash for name legibility — barely-there, never gray */}
         <div

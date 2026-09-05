@@ -38,7 +38,8 @@ export function EventCard({
         {/* Editorial date numeral */}
         <div className="flex items-start gap-5 md:flex-col md:gap-3">
           <span
-            className="type-display text-[clamp(4.5rem,10vw,8rem)] leading-none text-powder select-none"
+            className="type-display text-[clamp(4.5rem,10vw,8rem)] leading-none text-mist select-none"
+            style={{ fontWeight: 640 }}
             aria-hidden="true"
           >
             {dayNumeral}

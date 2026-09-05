@@ -1,7 +1,7 @@
 import { EVENTS } from "@/config/wedding";
 import { Countdown } from "@/components/Countdown";
 import { DrawOnView } from "@/components/tatreez/DrawOnView";
-import { TatreezStar } from "@/components/tatreez/Tatreez";
+import { Moon } from "@/components/Moon";
 
 import { EventCard } from "./EventCard";
 
@@ -16,7 +16,7 @@ export function EventsSection() {
 
       <header className="px-6 pt-(--spacing-section) pb-14 text-center md:pb-16">
         <DrawOnView className="mx-auto mb-6 flex justify-center text-dusty">
-          <TatreezStar className="w-8" />
+          <Moon className="w-9" />
         </DrawOnView>
         <p className="type-caps text-[0.65rem] text-blue-deep">
           Two celebrations

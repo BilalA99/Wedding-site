@@ -25,21 +25,21 @@ export function Nav() {
       }`}
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2.5 md:px-8">
         <a
           href="#top"
-          className="font-display text-lg tracking-wide text-ink"
           aria-label="Bilal Ahmad and Jennah Samhan — top of page"
+          className="block"
         >
-          B&nbsp;<span className="text-dusty italic">&amp;</span>&nbsp;J
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/image/monogram.webp"
+            alt=""
+            className="h-11 w-11 object-contain md:h-12 md:w-12"
+            draggable={false}
+          />
         </a>
-        <nav aria-label="Main" className="flex items-center gap-6 md:gap-8">
-          <a
-            href="#events"
-            className="type-caps text-[0.62rem] text-ink-soft transition-colors duration-300 hover:text-blue-deep"
-          >
-            Events
-          </a>
+        <nav aria-label="Main" className="flex items-center">
           <a
             href="#rsvp"
             className="type-caps rounded-full border border-blue-deep/30 px-4 py-2 text-[0.62rem] text-blue-deep transition-colors duration-300 hover:border-blue-deep hover:bg-blue-deep hover:text-paper-pure"

@@ -22,7 +22,7 @@ async function chooseEvent(
   clicksUp = 0,
 ) {
   if (accept) {
-    await page.getByRole("button", { name: /joyfully accept/i }).click();
+    await page.getByRole("button", { name: /accept with pleasure/i }).click();
     for (let i = 0; i < clicksUp; i++) {
       await page.getByRole("button", { name: /more guests/i }).click();
     }

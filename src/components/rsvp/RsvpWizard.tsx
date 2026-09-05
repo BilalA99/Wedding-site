@@ -226,7 +226,7 @@ export function RsvpWizard() {
                   aria-invalid={nameError ? true : undefined}
                   aria-describedby={nameError ? "name-error" : undefined}
                   className={inputClass}
-                  placeholder="e.g. The Ahmad Family"
+                  placeholder="Bilal Ahmad"
                 />
                 {nameError && (
                   <p id="name-error" className="mt-2 text-sm text-error">
@@ -411,7 +411,7 @@ function EventStep({
           <ChoiceButton
             selected={choice.attending === true}
             onClick={() => updateChoice(slug, { attending: true })}
-            title="Joyfully accept"
+            title="Accept with pleasure"
           />
           <ChoiceButton
             selected={choice.attending === false}

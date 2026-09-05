@@ -24,3 +24,8 @@ projects:
 Production dependencies (Next.js, React, Tailwind CSS, Motion, Lenis,
 Three.js, React Three Fiber, Supabase JS, Zod) are used under their
 respective MIT/Apache-2.0 licenses as declared in their packages.
+
+## Imagery
+
+Full-moon illustration: [freesvg.org/full-moon](https://freesvg.org/full-moon)
+(OpenClipart), Public Domain / CC0.

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { isPlausibleToken } from "@/lib/tokens";
 import { findPartyByToken } from "@/lib/rsvp-service";
-import { TatreezStar } from "@/components/tatreez/Tatreez";
+import { Moon } from "@/components/Moon";
 
 import { ManageForm } from "./ManageForm";
 
@@ -48,7 +48,7 @@ export default async function ManageRsvpPage({
     <main className="min-h-dvh bg-ice px-6 py-16 md:py-24">
       <div className="mx-auto max-w-xl rounded-sm border border-line-blue bg-paper-pure px-6 py-10 shadow-[0_10px_40px_rgba(39,52,63,0.06)] md:px-10 md:py-12">
         <div className="is-drawn flex justify-center text-dusty">
-          <TatreezStar className="w-10" />
+          <Moon className="w-10" />
         </div>
         <h1 className="type-display mt-6 text-center text-3xl text-ink md:text-4xl">
           Your RSVP

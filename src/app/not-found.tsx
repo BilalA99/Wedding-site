@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { TatreezStar } from "@/components/tatreez/Tatreez";
+import { Moon } from "@/components/Moon";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-paper px-6 text-center">
       <div className="is-drawn flex justify-center text-dusty">
-        <TatreezStar className="w-12" />
+        <Moon className="w-12" />
       </div>
       <h1 className="type-display mt-8 text-4xl text-ink">
         This page slipped a stitch

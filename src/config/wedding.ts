@@ -98,4 +98,7 @@ export const SITE_DESCRIPTION =
   "Bilal Ahmad & Jennah Samhan are getting married. Henna — October 3, 2026, Brooklyn. Wedding — October 4, 2026, Staten Island. RSVP inside.";
 
 export const VIDEO_PATH = "/video/hero-embroidery.mp4";
+export const VIDEO_MOBILE_PATH = "/video/hero-embroidery-mobile.mp4";
 export const POSTER_PATH = "/video/hero-poster.webp";
+export const MONOGRAM_PATH = "/image/monogram.webp";
+export const MOON_PATH = "/image/full-moon.webp";

@@ -1,11 +1,11 @@
 import { DrawOnView } from "@/components/tatreez/DrawOnView";
-import { TatreezStar } from "@/components/tatreez/Tatreez";
+import { Moon } from "@/components/Moon";
 
 export function Footer() {
   return (
     <footer className="border-t border-line-blue bg-paper px-6 py-16 text-center">
       <DrawOnView className="mx-auto mb-6 flex justify-center text-dusty">
-        <TatreezStar className="w-8" />
+        <Moon className="w-9" />
       </DrawOnView>
       <p className="font-display text-2xl text-ink">
         Bilal Ahmad <span className="text-dusty italic">&amp;</span> Jennah
