@@ -438,6 +438,9 @@ function EventStep({
                 value={choice.size}
                 onChange={(size) => updateChoice(slug, { size })}
               />
+              <p className="mt-4 border-t border-line-blue pt-3 text-[0.8rem] text-blue-deep italic">
+                We kindly request no children — thank you.
+              </p>
             </div>
           </motion.div>
         )}
