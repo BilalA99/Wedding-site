@@ -7,8 +7,7 @@ import {
   fullAddress,
   type WeddingEvent,
 } from "@/config/wedding";
-import { DrawOnView } from "@/components/tatreez/DrawOnView";
-import { TatreezDivider } from "@/components/tatreez/Tatreez";
+import { Divider } from "@/components/Divider";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -65,9 +64,7 @@ export function EventCard({
             {event.name}
           </h3>
 
-          <DrawOnView className="mt-4 w-40 text-dusty">
-            <TatreezDivider className="w-full" />
-          </DrawOnView>
+          <Divider className="mt-5 w-full max-w-sm md:max-w-md" />
 
           <div className="mt-6">
             <p className="font-display text-lg text-ink md:text-xl">
