@@ -86,9 +86,11 @@ Seeds both events and default `app_settings`.
   controlled-invitation mode; open RSVP is the launch mode)
 - CSV export from the header
 
-Sign-in: email OTP via Supabase Auth. Only addresses in `ADMIN_EMAILS` pass
-the middleware + server-side checks. The admin keeps its own dark
-professional theme, separate from the public visual system.
+Sign-in: username + password via Supabase Auth (usernames map to internal
+auth accounts; credentials are never stored in this repository). Only
+accounts in `ADMIN_EMAILS` pass the middleware + server-side checks. The
+admin keeps its own dark professional theme, separate from the public
+visual system.
 
 ## Music
 

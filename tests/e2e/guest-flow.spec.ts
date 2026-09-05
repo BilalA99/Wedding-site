@@ -144,7 +144,8 @@ test.describe("admin", () => {
   test("unauthenticated /admin redirects to login", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin\/login/);
-    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await expect(page.getByLabel(/username/i)).toBeVisible();
+    await expect(page.getByLabel(/password/i)).toBeVisible();
   });
 
   test("unauthenticated export API is blocked", async ({ request }) => {
