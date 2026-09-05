@@ -1,5 +1,6 @@
 import { ExperienceProvider } from "@/components/providers/ExperienceProvider";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
+import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/hero/Hero";
 import { EventsSection } from "@/components/events/EventsSection";
 import { RsvpSection } from "@/components/rsvp/RsvpSection";
@@ -10,7 +11,8 @@ export default function HomePage() {
   return (
     <ExperienceProvider>
       <SmoothScroll />
-      <main>
+      <Nav />
+      <main id="top">
         <Hero />
         <EventsSection />
         <RsvpSection />

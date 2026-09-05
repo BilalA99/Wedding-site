@@ -21,33 +21,36 @@ export function EventCard({
 }) {
   const reducedMotion = useReducedMotion();
   const dayNumeral = event.date.slice(-2);
+  const tinted = index % 2 === 0;
 
   return (
     <motion.article
-      initial={
-        reducedMotion ? { opacity: 1 } : { opacity: 0, y: 40 }
-      }
+      initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 36 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 1, delay: index * 0.08, ease: EASE }}
-      className="relative border-t border-charcoal/15 py-14 md:py-20"
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 1, ease: EASE }}
+      className={`relative px-6 py-16 md:px-10 md:py-24 ${
+        tinted ? "bg-ice" : "bg-paper"
+      }`}
       aria-labelledby={`event-${event.slug}`}
     >
-      <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-14">
+      <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-14">
         {/* Editorial date numeral */}
         <div className="flex items-start gap-5 md:flex-col md:gap-3">
           <span
-            className="type-display text-[clamp(4.5rem,10vw,8rem)] leading-none text-charcoal/12 select-none"
+            className="type-display text-[clamp(4.5rem,10vw,8rem)] leading-none text-powder select-none"
             aria-hidden="true"
           >
             {dayNumeral}
           </span>
           <div className="pt-2 md:pt-0">
-            <p className="type-caps text-[0.6rem] text-thread">{event.weekday}</p>
-            <p className="mt-1 font-display text-xl text-charcoal md:text-2xl">
+            <p className="type-caps text-[0.6rem] text-blue-deep">
+              {event.weekday}
+            </p>
+            <p className="mt-1 font-display text-xl text-ink md:text-2xl">
               {event.dateLabel}
             </p>
-            <p className="type-caps mt-1 text-[0.65rem] text-olive-soft">
+            <p className="type-caps mt-1 text-[0.65rem] text-ink-soft">
               {event.timeLabel}
             </p>
           </div>
@@ -56,20 +59,20 @@ export function EventCard({
         <div>
           <h3
             id={`event-${event.slug}`}
-            className="type-display text-[clamp(2.2rem,6vw,3.8rem)] text-charcoal"
+            className="type-display text-[clamp(2.2rem,6vw,3.8rem)] text-ink"
           >
             {event.name}
           </h3>
 
-          <DrawOnView className="mt-4 w-40 text-thread/60">
+          <DrawOnView className="mt-4 w-40 text-dusty">
             <TatreezDivider className="w-full" />
           </DrawOnView>
 
           <div className="mt-6">
-            <p className="font-display text-lg text-charcoal md:text-xl">
+            <p className="font-display text-lg text-ink md:text-xl">
               {event.venue}
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-charcoal/70 md:text-base">
+            <p className="mt-1 text-sm leading-relaxed text-ink-soft md:text-base">
               {event.address}
               <br />
               {event.city}, {event.region} {event.postalCode}
@@ -81,7 +84,7 @@ export function EventCard({
               href={directionsUrl(event)}
               target="_blank"
               rel="noopener noreferrer"
-              className="group type-caps inline-flex min-h-11 items-center gap-2 rounded-full border border-charcoal/25 px-6 py-3 text-[0.65rem] text-charcoal transition-colors duration-300 hover:border-thread hover:text-thread"
+              className="group type-caps inline-flex min-h-11 items-center gap-2 rounded-sm bg-blue-deep px-6 py-3 text-[0.65rem] text-paper-pure transition-colors duration-300 hover:bg-ink"
               aria-label={`Directions to ${event.venue}, ${fullAddress(event)}`}
             >
               Directions
@@ -94,7 +97,7 @@ export function EventCard({
             </a>
             <a
               href={`/api/calendar/${event.slug}`}
-              className="type-caps inline-flex min-h-11 items-center gap-2 px-4 py-3 text-[0.65rem] text-charcoal/60 transition-colors duration-300 hover:text-thread"
+              className="type-caps inline-flex min-h-11 items-center gap-2 rounded-sm border border-powder px-5 py-3 text-[0.65rem] text-blue-deep transition-colors duration-300 hover:border-dusty"
             >
               Add to calendar
             </a>

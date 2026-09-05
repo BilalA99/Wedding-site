@@ -6,9 +6,9 @@ import { expect, test, type Page } from "@playwright/test";
  * the admin — names are prefixed "E2E" for easy identification).
  */
 
-async function enterQuietly(page: Page) {
+// There is no entrance gate any more — visitors land directly on the hero.
+async function openSite(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: /enter quietly/i }).click();
 }
 
 async function fillName(page: Page, name: string) {
@@ -35,14 +35,10 @@ async function chooseEvent(
 test.describe("landing", () => {
   test("shows names, dates, and both events", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      "BILAL",
-    );
-    await expect(
-      page.getByRole("button", { name: /enter with music/i }),
-    ).toBeVisible();
+    const heading = page.getByRole("heading", { level: 1 });
+    await expect(heading).toContainText("Bilal Ahmad");
+    await expect(heading).toContainText("Jennah Samhan");
 
-    await page.getByRole("button", { name: /enter quietly/i }).click();
     await expect(
       page.getByRole("heading", { name: /^henna$/i }),
     ).toBeVisible();
@@ -77,7 +73,7 @@ test.describe("RSVP flow (requires database)", () => {
     page,
   }) => {
     const name = `E2E Both ${Date.now()}`;
-    await enterQuietly(page);
+    await openSite(page);
     await page.getByRole("link", { name: /the celebrations/i }).click();
     await fillName(page, name);
 
@@ -111,6 +107,7 @@ test.describe("RSVP flow (requires database)", () => {
     const weddingSize = page.locator("#size-wedding");
     await expect(weddingSize).toHaveValue("6");
     await weddingSize.fill("3");
+    await expect(weddingSize).toHaveValue("3"); // ensure React state caught up
     await page.getByRole("button", { name: /save changes/i }).click();
     await expect(page.getByText(/saved — thank you/i)).toBeVisible({
       timeout: 15_000,
@@ -122,7 +119,7 @@ test.describe("RSVP flow (requires database)", () => {
   });
 
   test("decline both events", async ({ page }) => {
-    await enterQuietly(page);
+    await openSite(page);
     await page.getByRole("link", { name: /the celebrations/i }).click();
     await fillName(page, `E2E Decline ${Date.now()}`);
     await chooseEvent(page, false);

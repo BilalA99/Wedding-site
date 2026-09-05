@@ -3,9 +3,9 @@
 // this static copy renders the public site without a database round-trip.
 
 export const COUPLE = {
-  partnerA: "Bilal",
-  partnerB: "Jennah",
-  displayName: "Bilal & Jennah",
+  partnerA: "Bilal Ahmad",
+  partnerB: "Jennah Samhan",
+  displayName: "Bilal Ahmad & Jennah Samhan",
 } as const;
 
 export const TIMEZONE = "America/New_York";
@@ -93,6 +93,9 @@ export const MAX_PARTY_SIZE = 12;
 
 export const AUDIO_PATH = "/audio/wedding-theme.mp3";
 
-export const SITE_TITLE = "Bilal & Jennah | October 2026";
+export const SITE_TITLE = "Bilal Ahmad & Jennah Samhan | October 2026";
 export const SITE_DESCRIPTION =
-  "Bilal & Jennah are getting married. Henna — October 3, 2026, Brooklyn. Wedding — October 4, 2026, Staten Island. RSVP inside.";
+  "Bilal Ahmad & Jennah Samhan are getting married. Henna — October 3, 2026, Brooklyn. Wedding — October 4, 2026, Staten Island. RSVP inside.";
+
+export const VIDEO_PATH = "/video/hero-embroidery.mp4";
+export const POSTER_PATH = "/video/hero-poster.webp";

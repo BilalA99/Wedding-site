@@ -12,6 +12,11 @@ interface FormChoice {
   size: number;
 }
 
+const inputClass =
+  "w-full rounded-sm border border-line-blue bg-paper px-4 py-3 text-base text-ink transition-colors duration-300 focus:border-dusty";
+
+const labelClass = "type-caps mb-2 block text-[0.62rem] text-blue-deep";
+
 export function ManageForm({
   token,
   party,
@@ -34,9 +39,9 @@ export function ManageForm({
   const [email, setEmail] = useState(party.email ?? "");
   const [phone, setPhone] = useState(party.phone ?? "");
   const [message, setMessage] = useState(party.message ?? "");
-  const [status, setStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
@@ -79,10 +84,7 @@ export function ManageForm({
       className="flex flex-col gap-8"
     >
       <div>
-        <label
-          htmlFor="manage-name"
-          className="type-caps mb-2 block text-[0.65rem] text-sand"
-        >
+        <label htmlFor="manage-name" className={labelClass}>
           Name
         </label>
         <input
@@ -90,7 +92,7 @@ export function ManageForm({
           type="text"
           value={primaryName}
           onChange={(e) => setPrimaryName(e.target.value)}
-          className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+          className={inputClass}
         />
       </div>
 
@@ -99,9 +101,9 @@ export function ManageForm({
         return (
           <fieldset
             key={event.slug}
-            className="hairline rounded-lg border bg-charcoal-soft/40 p-5"
+            className="rounded-sm border border-line-blue bg-ice p-5"
           >
-            <legend className="type-caps px-2 text-[0.65rem] text-thread-bright">
+            <legend className="type-caps px-2 text-[0.62rem] text-blue-deep">
               {event.name} · {event.dateLabel}
             </legend>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
@@ -114,10 +116,10 @@ export function ManageForm({
                     [event.slug]: { ...c[event.slug], attending: true },
                   }))
                 }
-                className={`min-h-12 rounded-lg border px-4 py-3 text-left font-display transition-colors ${
+                className={`min-h-12 rounded-sm border px-4 py-3 text-left font-display transition-colors ${
                   choice.attending
-                    ? "border-gold/80 bg-gold/10 text-gold-soft"
-                    : "hairline text-ivory hover:border-ivory/40"
+                    ? "border-blue-deep bg-paper-pure text-blue-deep"
+                    : "border-line-blue text-ink hover:border-dusty"
                 }`}
               >
                 Attending
@@ -131,10 +133,10 @@ export function ManageForm({
                     [event.slug]: { ...c[event.slug], attending: false },
                   }))
                 }
-                className={`min-h-12 rounded-lg border px-4 py-3 text-left font-display transition-colors ${
+                className={`min-h-12 rounded-sm border px-4 py-3 text-left font-display transition-colors ${
                   !choice.attending
-                    ? "border-gold/80 bg-gold/10 text-gold-soft"
-                    : "hairline text-ivory hover:border-ivory/40"
+                    ? "border-blue-deep bg-paper-pure text-blue-deep"
+                    : "border-line-blue text-ink hover:border-dusty"
                 }`}
               >
                 Unable to attend
@@ -145,7 +147,7 @@ export function ManageForm({
               <div className="mt-4 flex items-center justify-between gap-4">
                 <label
                   htmlFor={`size-${event.slug}`}
-                  className="text-sm text-ivory/85"
+                  className="text-sm text-ink"
                 >
                   Guests (including you)
                 </label>
@@ -167,7 +169,7 @@ export function ManageForm({
                       },
                     }));
                   }}
-                  className="hairline w-24 rounded-lg border bg-charcoal px-3 py-2.5 text-center text-base text-ivory"
+                  className="w-24 rounded-sm border border-line-blue bg-paper-pure px-3 py-2.5 text-center text-base text-ink"
                 />
               </div>
             )}
@@ -177,10 +179,7 @@ export function ManageForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label
-            htmlFor="manage-email"
-            className="type-caps mb-2 block text-[0.65rem] text-sand"
-          >
+          <label htmlFor="manage-email" className={labelClass}>
             Email (optional)
           </label>
           <input
@@ -188,14 +187,11 @@ export function ManageForm({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+            className={inputClass}
           />
         </div>
         <div>
-          <label
-            htmlFor="manage-phone"
-            className="type-caps mb-2 block text-[0.65rem] text-sand"
-          >
+          <label htmlFor="manage-phone" className={labelClass}>
             Phone (optional)
           </label>
           <input
@@ -203,16 +199,13 @@ export function ManageForm({
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+            className={inputClass}
           />
         </div>
       </div>
 
       <div>
-        <label
-          htmlFor="manage-message"
-          className="type-caps mb-2 block text-[0.65rem] text-sand"
-        >
+        <label htmlFor="manage-message" className={labelClass}>
           Note for the couple (optional)
         </label>
         <textarea
@@ -221,27 +214,27 @@ export function ManageForm({
           maxLength={2000}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+          className={inputClass}
         />
       </div>
 
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-thread/50 bg-thread/10 px-4 py-3 text-sm text-ivory"
+          className="rounded-sm border border-error/40 bg-error/5 px-4 py-3 text-sm text-error"
         >
           {error}
         </div>
       )}
 
       <div className="flex items-center justify-end gap-4">
-        <span aria-live="polite" className="text-sm text-gold-soft">
+        <span aria-live="polite" className="text-sm text-blue-deep">
           {status === "saved" ? "Saved — thank you!" : ""}
         </span>
         <button
           type="submit"
           disabled={status === "saving"}
-          className="type-caps min-h-12 rounded-full border border-gold/70 bg-gold/10 px-9 py-3 text-[0.7rem] text-gold-soft transition-all hover:bg-gold/20 disabled:opacity-50"
+          className="type-caps min-h-12 rounded-sm bg-blue-deep px-9 py-3 text-[0.68rem] text-paper-pure transition-colors duration-300 hover:bg-ink disabled:opacity-50"
         >
           {status === "saving" ? "Saving…" : "Save changes"}
         </button>

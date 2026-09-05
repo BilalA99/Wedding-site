@@ -22,23 +22,23 @@ export function CountStepper({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      <label htmlFor={`${idBase}-count`} className="text-sm text-ivory/85">
+      <label htmlFor={`${idBase}-count`} className="text-sm text-ink">
         {label}
       </label>
-      <div className="hairline flex items-center rounded-full border">
+      <div className="flex items-center rounded-full border border-line-blue bg-paper-pure">
         <button
           type="button"
           onClick={() => set(value - 1)}
           disabled={value <= 1}
           aria-label="Fewer guests"
-          className="flex h-11 w-11 items-center justify-center rounded-l-full text-lg text-ivory transition active:scale-90 disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-l-full text-lg text-ink transition active:scale-90 disabled:opacity-30"
         >
           −
         </button>
         <output
           id={`${idBase}-count`}
           aria-live="polite"
-          className="tabular relative block w-10 overflow-hidden text-center font-display text-xl text-gold-soft"
+          className="tabular relative block w-10 overflow-hidden text-center font-display text-xl text-blue-deep"
         >
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
@@ -58,7 +58,7 @@ export function CountStepper({
           onClick={() => set(value + 1)}
           disabled={value >= MAX_PARTY_SIZE}
           aria-label="More guests"
-          className="flex h-11 w-11 items-center justify-center rounded-r-full text-lg text-ivory transition active:scale-90 disabled:opacity-30"
+          className="flex h-11 w-11 items-center justify-center rounded-r-full text-lg text-ink transition active:scale-90 disabled:opacity-30"
         >
           +
         </button>

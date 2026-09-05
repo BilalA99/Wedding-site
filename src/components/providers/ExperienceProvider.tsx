@@ -13,8 +13,6 @@ import {
 import { AUDIO_PATH } from "@/config/wedding";
 
 interface ExperienceContextValue {
-  entered: boolean;
-  enter: (withMusic: boolean) => void;
   musicPlaying: boolean;
   toggleMusic: () => void;
   audioAvailable: boolean;
@@ -30,49 +28,29 @@ export function useExperience(): ExperienceContextValue {
 
 const TARGET_VOLUME = 0.3;
 
+/**
+ * Music behavior: the song attempts to start the moment the page mounts.
+ * Where the browser blocks audible autoplay, a one-time listener starts it
+ * on the visitor's first tap/click/keypress anywhere — no gate, no modal.
+ * An explicit pause is remembered for the session and never overridden.
+ */
 export function ExperienceProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [entered, setEntered] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [audioAvailable, setAudioAvailable] = useState(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeRef = useRef<number | null>(null);
   const wasPlayingRef = useRef(false);
-
-  // Restore session preference (returning visitors skip the gate). Runs in a
-  // rAF callback after hydration to avoid synchronous cascading renders.
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      try {
-        if (sessionStorage.getItem("bj-entered") === "1") setEntered(true);
-      } catch {
-        // storage unavailable — treat as first visit
-      }
-      setHydrated(true);
-    });
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Scroll lock while the entrance gate is up (only after hydration so a
-  // no-JS or slow-JS visitor can always scroll).
-  useEffect(() => {
-    if (!hydrated) return;
-    document.body.dataset.scrollLocked = entered ? "false" : "true";
-    if (entered) delete document.body.dataset.scrollLocked;
-    return () => {
-      delete document.body.dataset.scrollLocked;
-    };
-  }, [entered, hydrated]);
+  const userPausedRef = useRef(false);
 
   const ensureAudio = useCallback((): HTMLAudioElement => {
     if (!audioRef.current) {
       const el = new Audio(AUDIO_PATH);
       el.loop = true;
-      el.preload = "none";
+      el.preload = "auto";
       el.volume = 0;
       el.addEventListener("error", () => {
         setAudioAvailable(false);
@@ -98,20 +76,19 @@ export function ExperienceProvider({
     fadeRef.current = requestAnimationFrame(step);
   }, []);
 
-  const playMusic = useCallback(() => {
+  const playMusic = useCallback((): Promise<boolean> => {
     const el = ensureAudio();
-    el.play()
+    return el
+      .play()
       .then(() => {
         setMusicPlaying(true);
         fadeTo(el, TARGET_VOLUME);
         try {
           sessionStorage.setItem("bj-music", "1");
         } catch {}
+        return true;
       })
-      .catch(() => {
-        setAudioAvailable(false);
-        setMusicPlaying(false);
-      });
+      .catch(() => false);
   }, [ensureAudio, fadeTo]);
 
   const pauseMusic = useCallback(() => {
@@ -123,23 +100,64 @@ export function ExperienceProvider({
     } catch {}
   }, [fadeTo]);
 
-  const enter = useCallback(
-    (withMusic: boolean) => {
-      setEntered(true);
-      try {
-        sessionStorage.setItem("bj-entered", "1");
-      } catch {}
-      if (withMusic) playMusic();
-    },
-    [playMusic],
-  );
+  // Autoplay attempt + first-interaction recovery.
+  useEffect(() => {
+    let paused = false;
+    try {
+      paused = sessionStorage.getItem("bj-music") === "0";
+    } catch {}
+    if (paused) {
+      userPausedRef.current = true;
+      return;
+    }
+
+    let cleanedUp = false;
+    const listeners: Array<[string, EventListener]> = [];
+
+    const removeListeners = () => {
+      for (const [type, fn] of listeners) {
+        window.removeEventListener(type, fn);
+      }
+      listeners.length = 0;
+    };
+
+    const tryOnInteraction: EventListener = () => {
+      if (cleanedUp || userPausedRef.current) {
+        removeListeners();
+        return;
+      }
+      playMusic().then((ok) => {
+        if (ok) removeListeners();
+      });
+    };
+
+    playMusic().then((ok) => {
+      if (ok || cleanedUp) return;
+      // Blocked — arm one-time recovery on any reasonable interaction.
+      for (const type of ["pointerdown", "touchstart", "keydown"]) {
+        window.addEventListener(type, tryOnInteraction, { passive: true });
+        listeners.push([type, tryOnInteraction]);
+      }
+    });
+
+    return () => {
+      cleanedUp = true;
+      removeListeners();
+    };
+  }, [playMusic]);
 
   const toggleMusic = useCallback(() => {
-    if (musicPlaying) pauseMusic();
-    else playMusic();
+    if (musicPlaying) {
+      userPausedRef.current = true;
+      pauseMusic();
+    } else {
+      userPausedRef.current = false;
+      playMusic();
+    }
   }, [musicPlaying, pauseMusic, playMusic]);
 
-  // Pause when the tab is hidden; resume gracefully when it returns.
+  // Pause when the tab is hidden; resume when it returns (unless the
+  // visitor explicitly paused).
   useEffect(() => {
     const onVisibility = () => {
       const el = audioRef.current;
@@ -147,7 +165,11 @@ export function ExperienceProvider({
       if (document.hidden) {
         wasPlayingRef.current = !el.paused;
         el.pause();
-      } else if (wasPlayingRef.current && musicPlaying) {
+      } else if (
+        wasPlayingRef.current &&
+        musicPlaying &&
+        !userPausedRef.current
+      ) {
         el.play().catch(() => {});
       }
     };
@@ -156,8 +178,8 @@ export function ExperienceProvider({
   }, [musicPlaying]);
 
   const value = useMemo(
-    () => ({ entered, enter, musicPlaying, toggleMusic, audioAvailable }),
-    [entered, enter, musicPlaying, toggleMusic, audioAvailable],
+    () => ({ musicPlaying, toggleMusic, audioAvailable }),
+    [musicPlaying, toggleMusic, audioAvailable],
   );
 
   return (

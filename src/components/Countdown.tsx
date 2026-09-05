@@ -41,8 +41,8 @@ export function Countdown() {
 
   if (remaining === null) {
     return (
-      <p className="type-caps text-xs text-olive-soft">
-        Celebrating — with love, Bilal &amp; Jennah
+      <p className="type-caps text-xs text-blue-deep">
+        Celebrating — with love, Bilal Ahmad &amp; Jennah Samhan
       </p>
     );
   }
@@ -56,16 +56,16 @@ export function Countdown() {
 
   return (
     <div
-      className="flex items-baseline justify-center gap-6 md:gap-10"
+      className="inline-flex items-baseline justify-center gap-0 divide-x divide-line-blue rounded-none border-y border-line-blue py-4"
       role="timer"
       aria-label={`${remaining.days} days until the wedding`}
     >
       {units.map((u) => (
-        <div key={u.label} className="text-center">
-          <div className="type-display tabular text-2xl text-charcoal md:text-4xl">
+        <div key={u.label} className="px-5 text-center md:px-8">
+          <div className="type-display tabular text-2xl text-ink md:text-4xl">
             {String(u.value).padStart(2, "0")}
           </div>
-          <div className="type-caps mt-1 text-[0.55rem] text-olive-soft md:text-[0.65rem]">
+          <div className="type-caps mt-1 text-[0.52rem] text-ink-soft md:text-[0.62rem]">
             {u.label}
           </div>
         </div>

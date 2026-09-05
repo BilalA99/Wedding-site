@@ -44,3 +44,9 @@ supabase/.branches/
 # editor/agents
 .claude/
 .gemini/
+
+# original heavy media sources (optimized copies live in public/)
+media-src/
+
+# visual audit output
+tests/visual/out/

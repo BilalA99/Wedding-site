@@ -38,7 +38,7 @@ export function InvitationsManager({
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [importResult, setImportResult] = useState<string | null>(null);
 
-  const templateCsv = `${IMPORT_HEADERS.join(",")}\r\nThe Hamdan Family,Omar,Hamdan,omar@example.com,+1 555 555 0100,yes,yes,no,4\r\n`;
+  const templateCsv = `${IMPORT_HEADERS.join(",")}\r\nThe Ahmad Family,Omar,Ahmad,omar@example.com,+1 555 555 0100,yes,yes,no,4\r\n`;
 
   const addHousehold = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,7 +4,7 @@ import { normalizeName, normalizePhone } from "@/lib/normalize";
 
 describe("normalizeName", () => {
   it("lowercases, trims, collapses whitespace", () => {
-    expect(normalizeName("  The   Hamdan  Family ")).toBe("the hamdan family");
+    expect(normalizeName("  The   Ahmad  Family ")).toBe("the ahmad family");
   });
 
   it("strips superficial punctuation", () => {

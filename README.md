@@ -1,14 +1,15 @@
-# Bilal & Jennah — Wedding RSVP
+# Bilal Ahmad & Jennah Samhan — Wedding RSVP
 
-A bespoke multi-event wedding invitation and RSVP experience for Bilal &
-Jennah's Henna (October 3, 2026 — Widdi Catering Hall, Brooklyn) and Wedding
+A bespoke multi-event wedding invitation and RSVP experience for Bilal Ahmad &
+Jennah Samhan's Henna (October 3, 2026 — Widdi Catering Hall, Brooklyn) and Wedding
 (October 4, 2026 — Hilton Garden Inn, Staten Island).
 
-Design language: luxury-minimal editorial typography over a deep charcoal /
-ivory palette, with an original SVG line-work system inspired by the geometry
-of Palestinian tatreez embroidery, a WebGL "stitch field" hero, and a
-thread-motif that runs from the hero through the events into the RSVP
-envelope.
+Design language: white, airy, luxury-stationery editorial — Bodoni Moda +
+Instrument Sans over a warm-paper / powder-blue palette derived from the
+custom looping tatreez embroidery hero video (see docs/visual-system.md),
+with a thread motif that runs from the hero through the events into the
+RSVP envelope. Music starts on load (or on first tap where browsers block
+autoplay).
 
 ## Stack
 
@@ -16,8 +17,6 @@ envelope.
 - **React 19**, **TypeScript** (strict)
 - **Tailwind CSS 4** (tokenized theme in `src/app/globals.css`)
 - **Motion** (Framer Motion successor) + **Lenis** smooth scrolling
-- **Three.js + React Three Fiber** for the hero particle field (lazy-loaded,
-  DPR-capped, reduced-motion aware, static SVG fallback)
 - **Supabase** (Postgres + Auth) — free tier
 - **Vercel** (Hobby) — $0/month infrastructure overall
 - **Vitest** (unit) + **Playwright** (e2e)
@@ -87,14 +86,17 @@ Seeds both events and default `app_settings`.
   controlled-invitation mode; open RSVP is the launch mode)
 - CSV export from the header
 
-Sign-in: email OTP (6-digit code) via Supabase Auth. Only addresses in
-`ADMIN_EMAILS` pass the middleware + server-side checks.
+Sign-in: email OTP via Supabase Auth. Only addresses in `ADMIN_EMAILS` pass
+the middleware + server-side checks. The admin keeps its own dark
+professional theme, separate from the public visual system.
 
 ## Music
 
-Drop the chosen track at `public/audio/wedding-theme.mp3`. Without a file the
-site still works — the sound controller hides itself if audio can't load.
-Guests choose "Enter with music" or "Enter quietly"; volume fades in at ~0.3.
+The track lives at `public/audio/wedding-theme.mp3`. It attempts to play the
+moment the page loads; where the browser blocks audible autoplay, the first
+tap/click/keypress anywhere starts it. Volume fades in to ~0.3, an explicit
+pause is remembered for the session, and the site still works with no file —
+the sound controller hides itself if audio can't load.
 
 ## Testing
 

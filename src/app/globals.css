@@ -1,7 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette — ivory/charcoal dominate; red is embroidery thread, not a CTA. */
+  /*
+   * PUBLIC PALETTE — derived from the hero embroidery video
+   * (warm linen paper #EAE6DE–#EDE9E1; thread blues #7D8D95–#A3B6C0;
+   * taupe threads #8B8E8D–#A8AAA9). Backgrounds are lifted slightly for
+   * screen airiness; text is deepened for WCAG AA contrast.
+   */
+  --color-paper: #fbfaf6; /* page base — airy warm white */
+  --color-paper-pure: #ffffff;
+  --color-linen: #f0ede5; /* video-matched linen surface */
+  --color-ice: #f2f5f7; /* very pale blue surface */
+  --color-powder: #d5e0e8; /* powder blue — borders, tints */
+  --color-mist: #b4c6d2; /* mist blue — light tatreez */
+  --color-dusty: #86a1b4; /* dusty blue — primary tatreez/accent */
+  --color-blue-deep: #47637a; /* accessible accent / primary buttons */
+  --color-ink: #27343f; /* primary text — deep blue-gray */
+  --color-ink-soft: #5a6a75; /* secondary text (AA on paper) */
+  --color-taupe: #a5a198; /* warm thread gray — decorative only */
+  --color-line: #e5e1d7; /* warm hairline */
+  --color-line-blue: #dde6ec; /* cool hairline */
+  --color-error: #a3453d; /* functional only — form validation */
+
+  /*
+   * LEGACY DARK PALETTE — retained exclusively for the /admin area,
+   * which keeps its own dark professional theme. Do not use on the
+   * public site.
+   */
   --color-ivory: #f7f2e9;
   --color-ivory-deep: #ece4d6;
   --color-ivory-dim: #ddd2bd;
@@ -16,8 +41,9 @@
   --color-gold: #b0955f;
   --color-gold-soft: #cbb98f;
 
-  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
-  --font-sans: var(--font-manrope), Manrope, ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bodoni), "Bodoni Moda", "Bodoni MT", Didot, serif;
+  --font-sans: var(--font-instrument), "Instrument Sans", ui-sans-serif,
+    system-ui, sans-serif;
 
   --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -25,7 +51,7 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
@@ -39,8 +65,8 @@ html {
 }
 
 body {
-  background-color: var(--color-charcoal);
-  color: var(--color-ivory);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -48,54 +74,39 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-gold) 40%, transparent);
-  color: var(--color-ivory);
+  background: color-mix(in srgb, var(--color-dusty) 30%, transparent);
+  color: var(--color-ink);
 }
 
-/* Focus visibility — gold thread ring */
 :focus-visible {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-blue-deep);
   outline-offset: 3px;
   border-radius: 2px;
 }
 
-/* Woven texture (pure CSS, no image request) */
-.texture-weave {
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(247, 242, 233, 0.012) 0px,
-      rgba(247, 242, 233, 0.012) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(247, 242, 233, 0.012) 0px,
-      rgba(247, 242, 233, 0.012) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-}
-
-/* Editorial display type */
+/* Editorial display type — Bodoni wants restrained tracking */
 .type-display {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1.02;
+  font-weight: 460;
+  letter-spacing: 0.005em;
+  line-height: 1.04;
+  font-optical-sizing: auto;
 }
 
 .type-caps {
   font-family: var(--font-sans);
   font-weight: 500;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
 }
 
-/* Fine hairline borders */
+/* Hairlines: warm (admin/legacy) and cool (public) */
 .hairline {
   border-color: color-mix(in srgb, var(--color-sand) 25%, transparent);
+}
+
+.hairline-blue {
+  border-color: var(--color-line-blue);
 }
 
 /* Thread-draw utility for SVG paths (used with pathLength=1) */
@@ -138,13 +149,6 @@ body {
   }
 }
 
-/* Hide scrollbar during entrance lock without layout shift */
-body[data-scroll-locked="true"] {
-  overflow: hidden;
-  height: 100dvh;
-}
-
-/* Number roll */
 .tabular {
   font-variant-numeric: tabular-nums;
 }

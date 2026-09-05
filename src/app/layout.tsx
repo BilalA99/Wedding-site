@@ -1,21 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Bodoni_Moda, Instrument_Sans } from "next/font/google";
 
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/config/wedding";
 
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
+const bodoni = Bodoni_Moda({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "variable",
   style: ["normal", "italic"],
-  variable: "--font-cormorant",
+  axes: ["opsz"],
+  variable: "--font-bodoni",
   display: "swap",
 });
 
-const manrope = Manrope({
+const instrument = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  weight: "variable",
+  variable: "--font-instrument",
   display: "swap",
 });
 
@@ -38,13 +40,13 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Bilal & Jennah",
+    statusBarStyle: "default",
+    title: "Bilal Ahmad & Jennah Samhan",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#17140f",
+  themeColor: "#fbfaf6",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -54,11 +56,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${manrope.variable}`}>
-      <body className="texture-weave">
+    <html lang="en" className={`${bodoni.variable} ${instrument.variable}`}>
+      <body>
         <a
           href="#events"
-          className="type-caps sr-only z-100 rounded-sm bg-charcoal px-4 py-3 text-xs text-ivory focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+          className="type-caps sr-only z-100 rounded-sm bg-paper px-4 py-3 text-xs text-ink focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
         >
           Skip to events
         </a>

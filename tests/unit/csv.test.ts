@@ -10,7 +10,7 @@ describe("csvEscape", () => {
   });
 
   it("quotes commas", () => {
-    expect(csvEscape("Hamdan, Omar")).toBe('"Hamdan, Omar"');
+    expect(csvEscape("Ahmad, Omar")).toBe('"Ahmad, Omar"');
   });
 
   it("doubles embedded quotes", () => {

@@ -5,7 +5,7 @@ import { MAX_PARTY_SIZE } from "@/config/wedding";
 
 const base = {
   client_submission_id: "3f2f1f38-9d1c-4e7a-b7f3-0a4c8f7a1e2d",
-  primary_name: "The Hamdan Family",
+  primary_name: "The Ahmad Family",
   responses: [
     { event_slug: "henna", attending: true, party_size: 4 },
     { event_slug: "wedding", attending: true, party_size: 6 },

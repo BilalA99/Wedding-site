@@ -15,7 +15,6 @@ import {
   anyAttending,
   buildSubmission,
   clearDraft,
-  emptyDraft,
   loadDraft,
   saveDraft,
   type WizardDraft,
@@ -23,13 +22,7 @@ import {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-type Step =
-  | "welcome"
-  | EventSlug
-  | "names"
-  | "contact"
-  | "review"
-  | "success";
+type Step = "welcome" | EventSlug | "names" | "contact" | "review" | "success";
 
 interface SuccessState {
   manageToken: string | null;
@@ -40,6 +33,11 @@ const stepVariants = {
   center: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -18 },
 };
+
+const inputClass =
+  "w-full rounded-sm border border-line-blue bg-paper px-4 py-3.5 text-base text-ink placeholder:text-ink-soft/50 transition-colors duration-300 focus:border-dusty";
+
+const labelClass = "type-caps mb-2 block text-[0.62rem] text-blue-deep";
 
 export function RsvpWizard() {
   const reducedMotion = useReducedMotion();
@@ -143,7 +141,8 @@ export function RsvpWizard() {
       };
       if (!res.ok || !data.ok) {
         setSubmitError(
-          data.error ?? "Something went wrong sending your RSVP. Please try again.",
+          data.error ??
+            "Something went wrong sending your RSVP. Please try again.",
         );
         setSubmitting(false);
         return;
@@ -176,7 +175,7 @@ export function RsvpWizard() {
             <span
               key={s}
               className={`block h-[3px] rounded-full transition-all duration-500 ${
-                i <= stepIndex ? "w-8 bg-gold" : "w-4 bg-ivory/20"
+                i <= stepIndex ? "w-8 bg-dusty" : "w-4 bg-powder"
               }`}
             />
           ))}
@@ -203,19 +202,16 @@ export function RsvpWizard() {
               <h3
                 ref={headingRef}
                 tabIndex={-1}
-                className="type-display text-3xl text-ivory outline-none md:text-4xl"
+                className="type-display text-3xl text-ink outline-none md:text-4xl"
               >
-                Will you be joining us?
+                Your reply
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-ivory/70">
+              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
                 One RSVP covers your whole party — you can adjust each
                 celebration separately.
               </p>
               <div className="mt-8">
-                <label
-                  htmlFor="primary-name"
-                  className="type-caps mb-2 block text-[0.65rem] text-sand"
-                >
+                <label htmlFor="primary-name" className={labelClass}>
                   Your name
                 </label>
                 <input
@@ -229,19 +225,16 @@ export function RsvpWizard() {
                   }}
                   aria-invalid={nameError ? true : undefined}
                   aria-describedby={nameError ? "name-error" : undefined}
-                  className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3.5 text-base text-ivory placeholder:text-ivory/30"
-                  placeholder="e.g. The Hamdan Family"
+                  className={inputClass}
+                  placeholder="e.g. The Ahmad Family"
                 />
                 {nameError && (
-                  <p id="name-error" className="mt-2 text-sm text-thread-bright">
+                  <p id="name-error" className="mt-2 text-sm text-error">
                     {nameError}
                   </p>
                 )}
               </div>
-              <WizardNav
-                onNext={continueFromWelcome}
-                nextLabel="Continue"
-              />
+              <WizardNav onNext={continueFromWelcome} nextLabel="Continue" />
             </div>
           )}
 
@@ -329,7 +322,7 @@ function WizardNav({
         <button
           type="button"
           onClick={onBack}
-          className="type-caps min-h-11 px-3 py-2 text-[0.65rem] text-ivory/50 transition-colors hover:text-ivory"
+          className="type-caps min-h-11 px-3 py-2 text-[0.62rem] text-ink-soft transition-colors hover:text-ink"
         >
           ← Back
         </button>
@@ -340,7 +333,7 @@ function WizardNav({
         type="button"
         onClick={onNext}
         disabled={nextDisabled}
-        className="group type-caps hairline inline-flex min-h-12 items-center gap-2 rounded-full border px-8 py-3 text-[0.7rem] text-ivory transition-all duration-300 hover:border-gold/70 hover:text-gold-soft disabled:opacity-40"
+        className="group type-caps inline-flex min-h-12 items-center gap-2 rounded-sm bg-blue-deep px-8 py-3 text-[0.68rem] text-paper-pure transition-colors duration-300 hover:bg-ink disabled:opacity-40"
       >
         {nextLabel}
         <span
@@ -382,7 +375,7 @@ function EventStep({
   return (
     <div>
       {duplicateHint && (
-        <div className="hairline mb-6 rounded-lg border bg-charcoal-soft/60 p-4 text-sm text-ivory/85">
+        <div className="mb-6 rounded-sm border border-powder bg-ice p-4 text-sm text-ink">
           <p>
             We may already have an RSVP under this name. If you&rsquo;ve
             responded before, use the management link from your confirmation to
@@ -391,31 +384,29 @@ function EventStep({
           <button
             type="button"
             onClick={onDismissHint}
-            className="type-caps mt-3 min-h-9 text-[0.6rem] text-gold-soft"
+            className="type-caps mt-3 min-h-9 text-[0.6rem] text-blue-deep"
           >
             This is a different party →
           </button>
         </div>
       )}
 
-      <p className="type-caps text-[0.6rem] text-thread-bright">
+      <p className="type-caps text-[0.6rem] text-blue-deep">
         {event.weekday} · {event.dateLabel} · {event.timeLabel}
       </p>
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="type-display mt-2 text-3xl text-ivory outline-none md:text-4xl"
+        className="type-display mt-2 text-3xl text-ink outline-none md:text-4xl"
       >
         The {event.name}
       </h3>
-      <p className="mt-2 text-sm text-ivory/60">
+      <p className="mt-2 text-sm text-ink-soft">
         {event.venue} · {event.city}, {event.region}
       </p>
 
       <fieldset className="mt-8">
-        <legend className="sr-only">
-          Will you attend the {event.name}?
-        </legend>
+        <legend className="sr-only">Will you attend the {event.name}?</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <ChoiceButton
             selected={choice.attending === true}
@@ -440,7 +431,7 @@ function EventStep({
             transition={{ duration: 0.4, ease: EASE }}
             className="overflow-hidden"
           >
-            <div className="hairline mt-6 rounded-lg border bg-charcoal-soft/40 p-5">
+            <div className="mt-6 rounded-sm border border-line-blue bg-ice p-5">
               <CountStepper
                 idBase={`${slug}`}
                 label={`Guests attending the ${event.name} (including you)`}
@@ -477,10 +468,10 @@ function ChoiceButton({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`min-h-13 rounded-lg border px-5 py-4 text-left font-display text-lg transition-all duration-300 ${
+      className={`min-h-13 rounded-sm border px-5 py-4 text-left font-display text-lg transition-all duration-300 ${
         selected
-          ? "border-gold/80 bg-gold/10 text-gold-soft"
-          : `hairline ${muted ? "text-ivory/60" : "text-ivory"} hover:border-ivory/40`
+          ? "border-blue-deep bg-ice text-blue-deep"
+          : `border-line-blue ${muted ? "text-ink-soft" : "text-ink"} hover:border-dusty`
       }`}
     >
       {title}
@@ -514,11 +505,11 @@ function NamesStep({
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="type-display text-3xl text-ivory outline-none md:text-4xl"
+        className="type-display text-3xl text-ink outline-none md:text-4xl"
       >
         Who will be joining you?
       </h3>
-      <p className="mt-3 text-sm text-ivory/60">
+      <p className="mt-3 text-sm text-ink-soft">
         Optional — your headcount is already saved.
       </p>
 
@@ -534,8 +525,10 @@ function NamesStep({
               update({ memberNames: next });
             }}
             aria-label={`Guest ${i + 1} name`}
-            placeholder={i === 0 ? draft.primaryName || "Guest 1" : `Guest ${i + 1}`}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory placeholder:text-ivory/30"
+            placeholder={
+              i === 0 ? draft.primaryName || "Guest 1" : `Guest ${i + 1}`
+            }
+            className={inputClass}
           />
         ))}
       </div>
@@ -544,7 +537,7 @@ function NamesStep({
         <button
           type="button"
           onClick={onNext}
-          className="type-caps min-h-9 text-[0.6rem] text-ivory/50 transition-colors hover:text-ivory"
+          className="type-caps min-h-9 text-[0.6rem] text-ink-soft transition-colors hover:text-ink"
         >
           Skip for now
         </button>
@@ -573,20 +566,17 @@ function ContactStep({
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="type-display text-3xl text-ivory outline-none md:text-4xl"
+        className="type-display text-3xl text-ink outline-none md:text-4xl"
       >
         A way to reach you
       </h3>
-      <p className="mt-3 text-sm text-ivory/60">
+      <p className="mt-3 text-sm text-ink-soft">
         Optional — helpful if plans change.
       </p>
 
       <div className="mt-8 flex flex-col gap-5">
         <div>
-          <label
-            htmlFor="rsvp-email"
-            className="type-caps mb-2 block text-[0.65rem] text-sand"
-          >
+          <label htmlFor="rsvp-email" className={labelClass}>
             Email
           </label>
           <input
@@ -596,14 +586,11 @@ function ContactStep({
             autoComplete="email"
             value={draft.email}
             onChange={(e) => update({ email: e.target.value })}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+            className={inputClass}
           />
         </div>
         <div>
-          <label
-            htmlFor="rsvp-phone"
-            className="type-caps mb-2 block text-[0.65rem] text-sand"
-          >
+          <label htmlFor="rsvp-phone" className={labelClass}>
             Phone
           </label>
           <input
@@ -613,14 +600,11 @@ function ContactStep({
             autoComplete="tel"
             value={draft.phone}
             onChange={(e) => update({ phone: e.target.value })}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+            className={inputClass}
           />
         </div>
         <div>
-          <label
-            htmlFor="rsvp-message"
-            className="type-caps mb-2 block text-[0.65rem] text-sand"
-          >
+          <label htmlFor="rsvp-message" className={labelClass}>
             A note for the couple
           </label>
           <textarea
@@ -629,7 +613,7 @@ function ContactStep({
             maxLength={2000}
             value={draft.message}
             onChange={(e) => update({ message: e.target.value })}
-            className="hairline w-full rounded-lg border bg-charcoal-soft/60 px-4 py-3 text-base text-ivory"
+            className={inputClass}
           />
         </div>
       </div>
@@ -661,11 +645,11 @@ function ReviewStep({
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="type-display text-3xl text-ivory outline-none md:text-4xl"
+        className="type-display text-3xl text-ink outline-none md:text-4xl"
       >
         One last look
       </h3>
-      <p className="mt-2 text-sm text-ivory/60">{draft.primaryName}</p>
+      <p className="mt-2 text-sm text-ink-soft">{draft.primaryName}</p>
 
       <dl className="mt-8 flex flex-col gap-4">
         {EVENTS.map((event) => {
@@ -673,13 +657,11 @@ function ReviewStep({
           return (
             <div
               key={event.slug}
-              className="hairline flex items-center justify-between rounded-lg border bg-charcoal-soft/40 px-5 py-4"
+              className="flex items-center justify-between rounded-sm border border-line-blue bg-ice px-5 py-4"
             >
               <div>
-                <dt className="font-display text-xl text-ivory">
-                  {event.name}
-                </dt>
-                <dd className="mt-1 text-sm text-ivory/70">
+                <dt className="font-display text-xl text-ink">{event.name}</dt>
+                <dd className="mt-1 text-sm text-ink-soft">
                   {choice.attending
                     ? `Attending · ${choice.size} ${choice.size === 1 ? "guest" : "guests"}`
                     : "Unable to attend"}
@@ -688,7 +670,7 @@ function ReviewStep({
               <button
                 type="button"
                 onClick={() => onEdit(event.slug)}
-                className="type-caps min-h-11 px-3 text-[0.6rem] text-gold-soft transition-colors hover:text-gold"
+                className="type-caps min-h-11 px-3 text-[0.6rem] text-blue-deep transition-colors hover:text-ink"
                 aria-label={`Edit ${event.name} response`}
               >
                 Edit
@@ -701,7 +683,7 @@ function ReviewStep({
       {submitError && (
         <div
           role="alert"
-          className="mt-6 rounded-lg border border-thread/50 bg-thread/10 px-4 py-3 text-sm text-ivory"
+          className="mt-6 rounded-sm border border-error/40 bg-error/5 px-4 py-3 text-sm text-error"
         >
           {submitError}
         </div>
@@ -711,7 +693,7 @@ function ReviewStep({
         <button
           type="button"
           onClick={onBack}
-          className="type-caps min-h-11 px-3 py-2 text-[0.65rem] text-ivory/50 transition-colors hover:text-ivory"
+          className="type-caps min-h-11 px-3 py-2 text-[0.62rem] text-ink-soft transition-colors hover:text-ink"
         >
           ← Back
         </button>
@@ -719,7 +701,7 @@ function ReviewStep({
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="type-caps min-h-12 rounded-full border border-gold/70 bg-gold/10 px-9 py-3 text-[0.7rem] text-gold-soft transition-all duration-300 hover:bg-gold/20 disabled:opacity-50"
+          className="type-caps min-h-12 rounded-sm bg-blue-deep px-9 py-3 text-[0.68rem] text-paper-pure transition-colors duration-300 hover:bg-ink disabled:opacity-50"
         >
           {submitting ? "Sending…" : "Confirm RSVP"}
         </button>
@@ -753,13 +735,13 @@ function SuccessStep({
 
   return (
     <div className="text-center">
-      <div className="is-drawn mx-auto flex w-24 justify-center text-gold/70">
+      <div className="is-drawn mx-auto flex w-24 justify-center text-dusty">
         <TatreezCluster className="w-24" />
       </div>
-      <h3 className="type-display mt-6 text-3xl text-ivory md:text-4xl">
+      <h3 className="type-display mt-6 text-3xl text-ink md:text-4xl">
         RSVP received
       </h3>
-      <p className="mt-3 text-sm text-ivory/70">
+      <p className="mt-3 text-sm text-ink-soft">
         We look forward to celebrating with you.
       </p>
 
@@ -769,13 +751,11 @@ function SuccessStep({
           return (
             <div
               key={event.slug}
-              className="hairline flex items-center justify-between rounded-lg border px-5 py-3.5"
+              className="flex items-center justify-between rounded-sm border border-line-blue bg-ice px-5 py-3.5"
             >
-              <dt className="font-display text-lg text-ivory">{event.name}</dt>
-              <dd className="text-sm text-ivory/75">
-                {choice.attending
-                  ? `Attending · ${choice.size}`
-                  : "Declined"}
+              <dt className="font-display text-lg text-ink">{event.name}</dt>
+              <dd className="text-sm text-ink-soft">
+                {choice.attending ? `Attending · ${choice.size}` : "Declined"}
               </dd>
             </div>
           );
@@ -787,7 +767,7 @@ function SuccessStep({
           <a
             key={e.slug}
             href={`/api/calendar/${e.slug}`}
-            className="type-caps hairline min-h-11 rounded-full border px-5 py-3 text-[0.6rem] text-ivory/80 transition-colors hover:text-gold-soft"
+            className="type-caps min-h-11 rounded-sm border border-powder px-5 py-3 text-[0.6rem] text-blue-deep transition-colors hover:border-dusty"
           >
             {e.name} calendar
           </a>
@@ -795,24 +775,24 @@ function SuccessStep({
       </div>
 
       {manageUrl && (
-        <div className="hairline mx-auto mt-10 max-w-md rounded-lg border bg-charcoal-soft/40 p-5 text-left">
-          <p className="type-caps text-[0.6rem] text-sand">
+        <div className="mx-auto mt-10 max-w-md rounded-sm border border-line-blue bg-ice p-5 text-left">
+          <p className="type-caps text-[0.6rem] text-blue-deep">
             Plans may change
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-ivory/75">
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">
             Keep this private link to update your RSVP at any time:
           </p>
           <div className="mt-3 flex items-center gap-2">
             <a
               href={manageUrl}
-              className="block flex-1 truncate rounded bg-charcoal px-3 py-2 font-mono text-xs text-gold-soft"
+              className="block flex-1 truncate rounded-sm bg-paper-pure px-3 py-2 font-mono text-xs text-blue-deep"
             >
               {manageUrl}
             </a>
             <button
               type="button"
               onClick={copyLink}
-              className="type-caps min-h-10 shrink-0 rounded-full border border-gold/50 px-4 py-2 text-[0.6rem] text-gold-soft"
+              className="type-caps min-h-10 shrink-0 rounded-sm border border-powder px-4 py-2 text-[0.6rem] text-blue-deep"
             >
               {copied ? "Copied" : "Copy"}
             </button>

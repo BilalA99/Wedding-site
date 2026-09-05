@@ -3,14 +3,13 @@
 import { useExperience } from "@/components/providers/ExperienceProvider";
 
 /**
- * Persistent floating music control with an animated waveform.
- * Hidden until the guest has entered; disappears if audio can't load.
+ * Small floating music control — white porcelain circle with a powder-blue
+ * ring and deep-blue waveform. Shows "playing" only when audio truly plays.
  */
 export function SoundController() {
-  const { entered, musicPlaying, toggleMusic, audioAvailable } =
-    useExperience();
+  const { musicPlaying, toggleMusic, audioAvailable } = useExperience();
 
-  if (!entered || !audioAvailable) return null;
+  if (!audioAvailable) return null;
 
   return (
     <button
@@ -18,7 +17,7 @@ export function SoundController() {
       onClick={toggleMusic}
       aria-label={musicPlaying ? "Pause music" : "Play music"}
       aria-pressed={musicPlaying}
-      className="hairline fixed right-4 bottom-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border bg-charcoal/80 backdrop-blur-sm transition-transform duration-300 hover:scale-105 md:right-6 md:bottom-6"
+      className="fixed right-4 bottom-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-powder bg-paper-pure/90 shadow-[0_2px_12px_rgba(39,52,63,0.08)] backdrop-blur-sm transition-transform duration-300 hover:scale-105 md:right-6 md:bottom-6"
       style={{
         marginBottom: "env(safe-area-inset-bottom, 0px)",
         marginRight: "env(safe-area-inset-right, 0px)",
@@ -28,7 +27,7 @@ export function SoundController() {
         {[0, 1, 2, 3].map((i) => (
           <span
             key={i}
-            className="w-[2px] rounded-full bg-gold"
+            className="w-[2px] rounded-full bg-blue-deep"
             style={
               musicPlaying
                 ? {

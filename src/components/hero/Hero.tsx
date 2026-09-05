@@ -1,192 +1,176 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 
-import { useExperience } from "@/components/providers/ExperienceProvider";
-import { TatreezCorner, TatreezDivider } from "@/components/tatreez/Tatreez";
-
-const StitchField = dynamic(() => import("./StitchField"), { ssr: false });
+import { POSTER_PATH, VIDEO_PATH } from "@/config/wedding";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-function NameReveal({
-  text,
+function LineReveal({
+  children,
   delay,
-  className,
+  className = "",
 }: {
-  text: string;
+  children: React.ReactNode;
   delay: number;
   className?: string;
 }) {
+  const reducedMotion = useReducedMotion();
   return (
-    <span className={`inline-block overflow-hidden ${className ?? ""}`}>
-      {text.split("").map((char, i) => (
-        <motion.span
-          key={i}
-          className="inline-block"
-          initial={{ y: "110%", opacity: 0 }}
-          animate={{ y: "0%", opacity: 1 }}
-          transition={{ duration: 1.1, delay: delay + i * 0.055, ease: EASE }}
-        >
-          {char}
-        </motion.span>
-      ))}
+    <span className={`block overflow-hidden ${className}`}>
+      <motion.span
+        className="block"
+        initial={
+          reducedMotion
+            ? { opacity: 1 }
+            : { y: "60%", opacity: 0, filter: "blur(6px)" }
+        }
+        animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: 1.3, delay, ease: EASE }}
+      >
+        {children}
+      </motion.span>
     </span>
   );
 }
 
 export function Hero() {
-  const { entered, enter } = useExperience();
   const reducedMotion = useReducedMotion();
-  const [webglOk, setWebglOk] = useState(false);
-  const [particleCount, setParticleCount] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  // Detect WebGL support and pick a particle budget for the device.
-  // Runs in a rAF callback so hydration completes before any state change.
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = requestAnimationFrame(() => {
-      try {
-        const canvas = document.createElement("canvas");
-        const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-        if (!gl) return;
-        const coarse = window.matchMedia("(pointer: coarse)").matches;
-        const memory =
-          (navigator as Navigator & { deviceMemory?: number }).deviceMemory ??
-          4;
-        setParticleCount(coarse ? (memory <= 4 ? 60 : 90) : 170);
-        setWebglOk(true);
-      } catch {
-        // fall back to the static hero
-      }
-    });
-    return () => cancelAnimationFrame(id);
-  }, [reducedMotion]);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-28%"]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const videoY = useTransform(scrollYProgress, [0, 1], ["0%", "8%"]);
 
-  // With reduced motion, everything is immediately present.
   const d = (t: number) => (reducedMotion ? 0 : t);
 
   return (
     <section
-      className="relative flex h-dvh min-h-[540px] flex-col items-center justify-center overflow-hidden bg-charcoal"
-      aria-label="Bilal and Jennah — October 2026"
+      ref={sectionRef}
+      className="relative flex h-dvh min-h-[560px] flex-col items-center justify-center overflow-hidden bg-linen"
+      aria-label="Bilal Ahmad and Jennah Samhan — October 2026"
     >
-      {/* Depth field */}
-      {webglOk && particleCount > 0 && (
-        <StitchField particleCount={particleCount} />
-      )}
-
-      {/* Vignette for typography legibility */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, transparent 40%, rgba(23,20,15,0.7) 100%)",
-        }}
+      {/* Hero artwork: looping embroidery video (decorative, muted).
+          With reduced motion, the still poster carries the scene. */}
+      <motion.div
+        className="absolute inset-0"
+        style={reducedMotion ? undefined : { y: videoY }}
         aria-hidden="true"
-      />
+      >
+        {/* Portrait phones crop the 16:9 frame to its blank center, so the
+            left embroidery column is pinned into view below md. */}
+        {reducedMotion ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={POSTER_PATH}
+            alt=""
+            className="h-full w-full object-cover object-[12%_50%] md:object-center"
+          />
+        ) : (
+          <video
+            className="h-full w-full object-cover object-[12%_50%] md:object-center"
+            src={VIDEO_PATH}
+            poster={POSTER_PATH}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            tabIndex={-1}
+          />
+        )}
+        {/* Soft radial wash for name legibility — barely-there, never gray */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 62% 46% at 50% 46%, rgba(251,250,246,0.62) 0%, rgba(251,250,246,0.25) 55%, rgba(251,250,246,0) 100%)",
+          }}
+        />
+        {/* Seam into the page below */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-28"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(251,250,246,0) 0%, #fbfaf6 100%)",
+          }}
+        />
+      </motion.div>
 
-      {/* Tatreez frame corners */}
-      <div className="is-drawn pointer-events-none absolute inset-4 text-sand/50 md:inset-8">
-        <TatreezCorner className="absolute top-0 left-0 w-10 md:w-14" />
-        <TatreezCorner className="absolute top-0 right-0 w-10 scale-x-[-1] md:w-14" />
-        <TatreezCorner className="absolute bottom-0 left-0 w-10 scale-y-[-1] md:w-14" />
-        <TatreezCorner className="absolute right-0 bottom-0 w-10 scale-[-1] md:w-14" />
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
+      <motion.div
+        className="relative z-10 flex flex-col items-center px-6 text-center"
+        style={reducedMotion ? undefined : { y: textY, opacity: textOpacity }}
+      >
         <motion.p
-          className="type-caps mb-6 text-[0.65rem] text-sand/80 md:mb-8 md:text-xs"
-          initial={{ opacity: 0 }}
+          className="type-caps mb-7 text-[0.62rem] text-blue-deep md:mb-9 md:text-xs"
+          initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, delay: d(0.4), ease: EASE }}
+          transition={{ duration: 1.2, delay: d(0.5), ease: EASE }}
         >
           Together with their families
         </motion.p>
 
-        <h1 className="type-display text-ivory">
-          <NameReveal
-            text="BILAL"
+        <h1 className="type-display text-ink">
+          <LineReveal
             delay={d(0.9)}
-            className="text-[clamp(3rem,14vw,7.5rem)] tracking-[0.08em]"
-          />
-          <motion.span
-            className="block font-display text-[clamp(1.6rem,6vw,3.2rem)] text-gold-soft italic"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: d(1.5), ease: EASE }}
+            className="text-[clamp(2.5rem,10.5vw,7.25rem)] leading-[1.06] whitespace-nowrap"
           >
-            &amp;
-          </motion.span>
-          <NameReveal
-            text="JENNAH"
-            delay={d(1.8)}
-            className="text-[clamp(3rem,14vw,7.5rem)] tracking-[0.08em]"
-          />
+            Bilal Ahmad
+          </LineReveal>
+          <LineReveal delay={d(1.5)} className="my-1 md:my-2">
+            <span className="font-display text-[clamp(1.4rem,4.5vw,2.9rem)] text-dusty italic">
+              &amp;
+            </span>
+          </LineReveal>
+          <LineReveal
+            delay={d(1.9)}
+            className="text-[clamp(2.5rem,10.5vw,7.25rem)] leading-[1.06] whitespace-nowrap"
+          >
+            Jennah Samhan
+          </LineReveal>
         </h1>
 
         <motion.div
-          className="is-drawn mt-7 w-48 text-sand/70 md:mt-9 md:w-60"
-          initial={{ opacity: 0 }}
+          className="mt-8 flex items-center gap-4 md:mt-10"
+          initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: d(2.4), ease: EASE }}
+          transition={{ duration: 1.1, delay: d(2.6), ease: EASE }}
+          aria-hidden="true"
         >
-          <TatreezDivider className="w-full" />
+          <span className="hidden h-px w-10 bg-dusty/50 sm:block md:w-16" />
+          <span className="font-sans text-[0.62rem] font-medium tracking-[0.22em] whitespace-nowrap text-ink-soft uppercase sm:tracking-[0.3em] md:text-xs">
+            October 3 &ndash; 4, 2026 · New York
+          </span>
+          <span className="hidden h-px w-10 bg-dusty/50 sm:block md:w-16" />
         </motion.div>
 
-        <motion.p
-          className="type-caps mt-7 text-xs text-ivory/85 md:mt-9 md:text-sm"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: d(2.7), ease: EASE }}
+        <motion.a
+          href="#events"
+          className="type-caps mt-12 flex flex-col items-center gap-2 text-[0.6rem] text-ink-soft transition-colors duration-300 hover:text-blue-deep md:mt-14"
+          initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: d(3.1), ease: EASE }}
         >
-          October 3 &ndash; 4, 2026 · New York
-        </motion.p>
-
-        {/* Entrance choices — available early; no forced waiting */}
-        {!entered ? (
-          <motion.div
-            className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4 md:mt-12"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: d(1.2), ease: EASE }}
+          <span>The celebrations</span>
+          <motion.span
+            aria-hidden="true"
+            animate={reducedMotion ? {} : { y: [0, 5, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
           >
-            <button
-              type="button"
-              onClick={() => enter(true)}
-              className="group hairline type-caps relative min-h-11 rounded-full border px-7 py-3 text-[0.65rem] text-ivory transition-colors duration-300 hover:border-gold/60 hover:text-gold-soft"
-            >
-              Enter with music
-            </button>
-            <button
-              type="button"
-              onClick={() => enter(false)}
-              className="type-caps min-h-11 px-4 py-3 text-[0.65rem] text-ivory/60 transition-colors duration-300 hover:text-ivory"
-            >
-              Enter quietly
-            </button>
-          </motion.div>
-        ) : (
-          <motion.a
-            href="#events"
-            className="type-caps mt-12 flex flex-col items-center gap-2 text-[0.6rem] text-sand/70 transition-colors hover:text-gold-soft"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-          >
-            <span>The celebrations</span>
-            <motion.span
-              aria-hidden="true"
-              animate={reducedMotion ? {} : { y: [0, 6, 0] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              ↓
-            </motion.span>
-          </motion.a>
-        )}
-      </div>
+            ↓
+          </motion.span>
+        </motion.a>
+      </motion.div>
     </section>
   );
 }
