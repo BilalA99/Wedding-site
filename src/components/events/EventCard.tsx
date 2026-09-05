@@ -75,6 +75,9 @@ export function EventCard({
               <br />
               {event.city}, {event.region} {event.postalCode}
             </p>
+            <p className="mt-4 text-[0.85rem] text-blue-deep italic">
+              We kindly request no children — thank you.
+            </p>
           </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
