@@ -1,84 +1,68 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { Inter, Cormorant_Garamond, Allura, Playfair_Display, Noto_Sans_Ethiopic } from "next/font/google";
-import "./main.css";
-import SmoothScroll from "@/components/providers/SmoothScroll";
-import ConditionalUI from "@/components/ConditionalUI";
-import { LanguageProvider } from "@/context/LanguageContext";
-import { ViewProvider, type ActiveView } from "@/context/ViewContext";
+import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/config/wedding";
+
+import "./globals.css";
+
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-cormorant"
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
+  display: "swap",
 });
-const allura = Allura({
+
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-allura"
-});
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-playfair"
-});
-const notoEthiopic = Noto_Sans_Ethiopic({
-  subsets: ["ethiopic"],
-  weight: ["300", "400"],
-  variable: "--font-ethiopic"
+  variable: "--font-manrope",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://forkuku.vercel.app'),
-  title: "Yonatan & Saron — September 4, 2026",
-  description: "The wedding of Yonatan & Saron · September 4, 2026 · Wrightsville, Pennsylvania.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  robots: { index: false, follow: false },
   openGraph: {
-    type: 'website',
-    title: "Yonatan & Saron — September 4, 2026",
-    description: "The wedding of Yonatan & Saron · September 4, 2026 · Wrightsville, Pennsylvania.",
-    images: [
-      {
-        url: 'https://foxezhxncpzzpbemdafa.supabase.co/storage/v1/object/public/wedding-ui/engagement_photo_3.jpeg',
-        width: 1200,
-        height: 630,
-        alt: 'Yonatan & Saron',
-      },
-    ],
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Bilal & Jennah",
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
+  themeColor: "#17140f",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const cookieStore = await cookies();
-  const initialView: ActiveView =
-    cookieStore.get('view_pref')?.value === 'save-the-date' ? 'save-the-date' : 'final-invite';
-
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-theme={initialView === 'final-invite' ? 'light' : 'dark'}>
-      <body className={`${inter.variable} ${cormorant.variable} ${allura.variable} ${playfair.variable} ${notoEthiopic.variable} font-sans`}>
-        <LanguageProvider>
-          <ViewProvider initialView={initialView}>
-            <SmoothScroll>
-              {/* Conditionally render nav/sound (hidden on admin/login) */}
-              <ConditionalUI />
-
-              {children}
-            </SmoothScroll>
-          </ViewProvider>
-        </LanguageProvider>
-
-          {/* Global Film Grain Overlay */}
-          <div className="film-grain" aria-hidden="true" />
+    <html lang="en" className={`${cormorant.variable} ${manrope.variable}`}>
+      <body className="texture-weave">
+        <a
+          href="#events"
+          className="type-caps sr-only z-100 rounded-sm bg-charcoal px-4 py-3 text-xs text-ivory focus:not-sr-only focus:fixed focus:top-4 focus:left-4"
+        >
+          Skip to events
+        </a>
+        {children}
       </body>
     </html>
   );

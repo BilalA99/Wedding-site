@@ -5,6 +5,10 @@ node_modules/
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # next.js
 .next/
@@ -22,8 +26,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# environment files (STRICT)
+# environment files — never commit secrets
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -32,19 +37,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local assets (now hosted on Supabase)
-public/images/
-public/audio/
+# supabase local
+supabase/.temp/
+supabase/.branches/
 
-# claude
-.claude/*
-!.claude/agents/
-!.claude/agents/**
-.env
-
-# gemini
+# editor/agents
+.claude/
 .gemini/
-PLAN.md
-ARCHITECTURE.md
-PROJECT.md
-STYLE.md

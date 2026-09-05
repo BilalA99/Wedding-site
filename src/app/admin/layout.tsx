@@ -1,11 +1,16 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Admin — Bilal & Jennah",
+  robots: { index: false, follow: false },
+};
+
+// Auth is enforced in middleware (session) and re-checked in every server
+// action / data fetch via getAdminUser(). The login page renders its own shell.
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen bg-[#F9F7F2] font-serif admin-theme">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

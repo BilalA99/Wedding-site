@@ -1,13 +1,98 @@
-// Single source of truth for the ceremony event details used by the
-// Add to Calendar feature (Google Calendar link + downloadable .ics),
-// consumed by both the light-mode website section and the Formal
-// Invitation email/SMS. Times are stored in UTC to avoid needing a
-// VTIMEZONE block in the .ics file — Wrightsville, PA is on EDT
-// (UTC-4) in September, so 2:30 PM/10:30 PM local is 18:30/02:30(+1) UTC.
-export const WEDDING_EVENT = {
-  title: 'Yonatan & Saron’s Wedding',
-  description: 'We can’t wait to celebrate with you! Guests welcomed at 2:30 PM, ceremony at 3:00 PM.',
-  location: 'Lauxmont Gardens (Japanese Garden), 1155 Long Level Road, Wrightsville, PA 17368',
-  startUtc: '2026-09-04T18:30:00Z',
-  endUtc: '2026-09-05T02:30:00Z',
-};
+// Single source of truth for non-secret wedding configuration.
+// Event details are also seeded into the database (supabase/migrations);
+// this static copy renders the public site without a database round-trip.
+
+export const COUPLE = {
+  partnerA: "Bilal",
+  partnerB: "Jennah",
+  displayName: "Bilal & Jennah",
+} as const;
+
+export const TIMEZONE = "America/New_York";
+
+export type EventSlug = "henna" | "wedding";
+
+export interface WeddingEvent {
+  slug: EventSlug;
+  name: string;
+  weekday: string;
+  dateLabel: string;
+  /** ISO date in the event's local timezone */
+  date: string;
+  timeLabel: string;
+  /** Event start as a fixed UTC instant (Oct 2026 is EDT, UTC-4). */
+  startUtc: string;
+  /** Assumed end for calendar entries. */
+  endUtc: string;
+  venue: string;
+  address: string;
+  city: string;
+  region: string;
+  postalCode: string;
+}
+
+export const EVENTS: readonly WeddingEvent[] = [
+  {
+    slug: "henna",
+    name: "Henna",
+    weekday: "Saturday",
+    dateLabel: "October 3, 2026",
+    date: "2026-10-03",
+    timeLabel: "7:00 PM",
+    startUtc: "2026-10-03T23:00:00Z",
+    endUtc: "2026-10-04T03:00:00Z",
+    venue: "Widdi Catering Hall",
+    address: "5602 6th Ave",
+    city: "Brooklyn",
+    region: "NY",
+    postalCode: "11220",
+  },
+  {
+    slug: "wedding",
+    name: "Wedding",
+    weekday: "Sunday",
+    dateLabel: "October 4, 2026",
+    date: "2026-10-04",
+    timeLabel: "7:00 PM",
+    startUtc: "2026-10-04T23:00:00Z",
+    endUtc: "2026-10-05T04:00:00Z",
+    venue: "Hilton Garden Inn New York/Staten Island",
+    address: "1100 South Ave",
+    city: "Staten Island",
+    region: "NY",
+    postalCode: "10314",
+  },
+] as const;
+
+export const EVENT_SLUGS = EVENTS.map((e) => e.slug) as EventSlug[];
+
+export function getEvent(slug: EventSlug): WeddingEvent {
+  const event = EVENTS.find((e) => e.slug === slug);
+  if (!event) throw new Error(`Unknown event: ${slug}`);
+  return event;
+}
+
+export function fullAddress(e: WeddingEvent): string {
+  return `${e.address}, ${e.city}, ${e.region} ${e.postalCode}`;
+}
+
+export function directionsUrl(e: WeddingEvent): string {
+  const q = encodeURIComponent(`${e.venue}, ${fullAddress(e)}`);
+  return `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+}
+
+export function appleMapsUrl(e: WeddingEvent): string {
+  const q = encodeURIComponent(`${e.venue}, ${fullAddress(e)}`);
+  return `https://maps.apple.com/?daddr=${q}`;
+}
+
+/** Wedding ceremony start — countdown target. */
+export const WEDDING_START_UTC = "2026-10-04T23:00:00Z";
+
+export const MAX_PARTY_SIZE = 12;
+
+export const AUDIO_PATH = "/audio/wedding-theme.mp3";
+
+export const SITE_TITLE = "Bilal & Jennah | October 2026";
+export const SITE_DESCRIPTION =
+  "Bilal & Jennah are getting married. Henna — October 3, 2026, Brooklyn. Wedding — October 4, 2026, Staten Island. RSVP inside.";

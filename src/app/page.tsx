@@ -1,46 +1,22 @@
-import Hero from '@/components/Hero';
-import Rsvp from '@/components/Rsvp';
-import GoogleEarthVideo from '@/components/GoogleEarthVideo';
-import JourneyGallery from '@/components/journey/JourneyGallery';
-import WeddingPartySection from '@/components/WeddingPartySection';
-import Section from '@/components/ui/Section';
-import Footer from '@/components/Footer';
-import RegistrySection from '@/components/RegistrySection';
-import DayOfTimeline from '@/components/DayOfTimeline';
-import HotelsSection from '@/components/HotelsSection';
+import { ExperienceProvider } from "@/components/providers/ExperienceProvider";
+import { SmoothScroll } from "@/components/providers/SmoothScroll";
+import { Hero } from "@/components/hero/Hero";
+import { EventsSection } from "@/components/events/EventsSection";
+import { RsvpSection } from "@/components/rsvp/RsvpSection";
+import { SoundController } from "@/components/SoundController";
+import { Footer } from "@/components/Footer";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main>
-      <Section id="home">
+    <ExperienceProvider>
+      <SmoothScroll />
+      <main>
         <Hero />
-      </Section>
-
-      <JourneyGallery />
-
-      <Section id="venue">
-        <GoogleEarthVideo />
-      </Section>
-
-      <Section id="timeline">
-        <DayOfTimeline />
-      </Section>
-
-      <WeddingPartySection />
-
-      <Section id="hotels">
-        <HotelsSection />
-      </Section>
-
-      <Section id="rsvp">
-        <Rsvp />
-      </Section>
-
-      <Section id="registry">
-        <RegistrySection />
-      </Section>
-
+        <EventsSection />
+        <RsvpSection />
+      </main>
       <Footer />
-    </main>
+      <SoundController />
+    </ExperienceProvider>
   );
 }

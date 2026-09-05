@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — ivory/charcoal dominate; red is embroidery thread, not a CTA. */
+  --color-ivory: #f7f2e9;
+  --color-ivory-deep: #ece4d6;
+  --color-ivory-dim: #ddd2bd;
+  --color-charcoal: #17140f;
+  --color-charcoal-soft: #272318;
+  --color-charcoal-mist: #3b3628;
+  --color-olive: #4e553c;
+  --color-olive-soft: #70765d;
+  --color-thread: #8a3b33;
+  --color-thread-bright: #a34a40;
+  --color-sand: #c9b89a;
+  --color-gold: #b0955f;
+  --color-gold-soft: #cbb98f;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), Manrope, ui-sans-serif, system-ui, sans-serif;
+
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --spacing-section: clamp(6rem, 14vh, 10rem);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--color-charcoal);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-gold) 40%, transparent);
+  color: var(--color-ivory);
+}
+
+/* Focus visibility — gold thread ring */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Woven texture (pure CSS, no image request) */
+.texture-weave {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(247, 242, 233, 0.012) 0px,
+      rgba(247, 242, 233, 0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(247, 242, 233, 0.012) 0px,
+      rgba(247, 242, 233, 0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+}
+
+/* Editorial display type */
+.type-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.02;
+}
+
+.type-caps {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+/* Fine hairline borders */
+.hairline {
+  border-color: color-mix(in srgb, var(--color-sand) 25%, transparent);
+}
+
+/* Thread-draw utility for SVG paths (used with pathLength=1) */
+@keyframes thread-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.thread-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.thread-path.is-drawn,
+.is-drawn .thread-path {
+  animation: thread-draw 1.6s var(--ease-silk) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-path,
+  .thread-path.is-drawn,
+  .is-drawn .thread-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Sound bars */
+@keyframes sound-bar {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Hide scrollbar during entrance lock without layout shift */
+body[data-scroll-locked="true"] {
+  overflow: hidden;
+  height: 100dvh;
+}
+
+/* Number roll */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

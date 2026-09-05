@@ -1,57 +1,38 @@
-'use client';
+"use client";
 
-import { ReactNode, useEffect, useRef } from 'react';
-import Lenis from 'lenis';
+import { useEffect } from "react";
+import Lenis from "lenis";
 
-interface SmoothScrollProps {
-  children: ReactNode;
-}
-
-export default function SmoothScroll({ children }: SmoothScrollProps) {
-  const lenisRef = useRef<Lenis | null>(null);
-
+/**
+ * Lenis smooth scrolling — skipped entirely when the visitor prefers
+ * reduced motion or is on a coarse-pointer device (native momentum
+ * scrolling on phones is already excellent and more battery-friendly).
+ */
+export function SmoothScroll() {
   useEffect(() => {
-    // Initialize Lenis with luxurious, weighted scroll feel
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    if (reducedMotion || coarsePointer) return;
+
     const lenis = new Lenis({
-      duration: 1.8,           // Slow, heavy scroll duration
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth expo easing
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 0.8,    // Slower wheel response for premium feel
-      touchMultiplier: 1.5,    // Slightly faster touch for mobile usability
+      duration: 1.1,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
     });
 
-    lenisRef.current = lenis;
-
-    // RAF loop for smooth updates
-    function raf(time: number) {
+    let rafId = 0;
+    const raf = (time: number) => {
       lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
+      rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
 
-    requestAnimationFrame(raf);
-
-    // Lenis takes over scroll control, so the browser's native "jump to
-    // #anchor on load" behavior no longer fires — honor it manually. Delayed
-    // so heavier sections (3D hero, lazy content) have settled before we
-    // measure the target's position.
-    let hashScrollTimer: ReturnType<typeof setTimeout> | undefined;
-    const hash = window.location.hash;
-    if (hash) {
-      hashScrollTimer = setTimeout(() => {
-        const target = document.querySelector(hash);
-        if (target) lenis.scrollTo(target as HTMLElement, { offset: 0 });
-      }, 600);
-    }
-
-    // Cleanup on unmount
     return () => {
-      if (hashScrollTimer) clearTimeout(hashScrollTimer);
+      cancelAnimationFrame(rafId);
       lenis.destroy();
-      lenisRef.current = null;
     };
   }, []);
 
-  return <>{children}</>;
+  return null;
 }
