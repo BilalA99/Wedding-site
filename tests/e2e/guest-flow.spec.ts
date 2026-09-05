@@ -95,7 +95,7 @@ test.describe("RSVP flow (requires database)", () => {
     await expect(page.getByText("Attending · 6 guests")).toBeVisible();
 
     await page.getByRole("button", { name: /confirm rsvp/i }).click();
-    await expect(page.getByText(/rsvp received/i)).toBeVisible({
+    await expect(page.getByRole("heading", { name: /rsvp received/i })).toBeVisible({
       timeout: 15_000,
     });
 
@@ -131,14 +131,14 @@ test.describe("RSVP flow (requires database)", () => {
     await page.getByRole("button", { name: /review/i }).click();
     await expect(page.getByText(/unable to attend/i).first()).toBeVisible();
     await page.getByRole("button", { name: /confirm rsvp/i }).click();
-    await expect(page.getByText(/rsvp received/i)).toBeVisible({
+    await expect(page.getByRole("heading", { name: /rsvp received/i })).toBeVisible({
       timeout: 15_000,
     });
   });
 
   test("invalid manage token discloses nothing", async ({ page }) => {
     await page.goto("/rsvp/manage/definitely-not-a-real-token");
-    await expect(page.getByText(/isn't valid/i)).toBeVisible();
+    await expect(page.getByText(/isn.t valid/i)).toBeVisible();
     await expect(page.locator("input")).toHaveCount(0);
   });
 });

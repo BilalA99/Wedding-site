@@ -20,7 +20,9 @@ export default defineConfig({
   projects: [
     {
       name: "mobile",
-      use: { ...devices["iPhone 12"] }, // 390×844 WebKit-ish viewport
+      // 390×844 WebKit viewport with Reduce Motion on — covers the iOS
+      // accessibility path and keeps animated elements stable for clicks.
+      use: { ...devices["iPhone 12"], contextOptions: { reducedMotion: "reduce" } },
     },
     {
       name: "desktop",
