@@ -50,3 +50,5 @@ media-src/
 
 # visual audit output
 tests/visual/out/
+.vercel
+.env*
