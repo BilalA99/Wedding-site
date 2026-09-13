@@ -3,8 +3,10 @@ import Link from "next/link";
 const NAV = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/rsvps", label: "RSVPs" },
+  { href: "/admin/guestbook", label: "Guestbook" },
   { href: "/admin/activity", label: "Activity" },
   { href: "/admin/invitations", label: "Invitations" },
+  { href: "/admin/integrations", label: "Integrations" },
 ] as const;
 
 export function AdminShell({

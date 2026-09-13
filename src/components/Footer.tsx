@@ -12,6 +12,29 @@ export function Footer() {
         Samhan
       </p>
       <p className="type-caps mt-2 text-[0.6rem] text-ink-soft">October 2026</p>
+      <nav
+        aria-label="Legal"
+        className="mt-8 flex items-center justify-center gap-5"
+      >
+        <a
+          href="/guestbook"
+          className="type-caps text-[0.55rem] text-ink-soft/80 transition-colors hover:text-ink"
+        >
+          Guestbook
+        </a>
+        <a
+          href="/privacy"
+          className="type-caps text-[0.55rem] text-ink-soft/80 transition-colors hover:text-ink"
+        >
+          Privacy
+        </a>
+        <a
+          href="/terms"
+          className="type-caps text-[0.55rem] text-ink-soft/80 transition-colors hover:text-ink"
+        >
+          Terms
+        </a>
+      </nav>
     </footer>
   );
 }

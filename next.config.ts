@@ -17,8 +17,11 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "media-src 'self'",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}`.trim(),
+      // blob: lets guests preview their selected video/photo locally.
+      "media-src 'self' blob:",
+      // www.googleapis.com is the guestbook's direct-to-Drive resumable
+      // upload target — file bytes go straight from the phone to Drive.
+      `connect-src 'self' https://www.googleapis.com ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}`.trim(),
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
