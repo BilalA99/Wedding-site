@@ -5,16 +5,25 @@ interface TatreezProps {
   stroke?: string;
 }
 
-/** Diamond cluster used in the RSVP confirmation stitch sequence. */
+/**
+ * Stitch cluster used in the RSVP and guestbook confirmation sequences:
+ * an eight-point star centered in the 96×96 box with a small diamond
+ * capping each of its four points. Every element shares the (48,48)
+ * center — the star's tips stop 4 units short of each diamond's tip, so
+ * nothing overlaps and the motif reads as one symmetric medallion.
+ */
 export function TatreezCluster({
   className = "",
   stroke = "currentColor",
 }: TatreezProps) {
+  // Diamond boxes are 24×24; these translates place their inner tips at
+  // (48,22)/(22,48)/(74,48)/(48,74) — a 4-unit gap from the star tips at
+  // (48,26)/(26,48)/(70,48)/(48,70), wide enough to survive stroke width.
   const positions = [
-    { x: 36, y: 0, delay: 0 },
-    { x: 12, y: 24, delay: 0.2 },
-    { x: 60, y: 24, delay: 0.35 },
-    { x: 36, y: 48, delay: 0.5 },
+    { x: 36, y: 0, delay: 0 }, // north
+    { x: 0, y: 36, delay: 0.15 }, // west
+    { x: 72, y: 36, delay: 0.3 }, // east
+    { x: 36, y: 72, delay: 0.45 }, // south
   ];
   return (
     <svg
@@ -50,7 +59,17 @@ export function TatreezCluster({
           strokeWidth="1.5"
           pathLength="1"
           className="thread-path"
-          style={{ animationDelay: "0.75s" }}
+          style={{ animationDelay: "0.7s" }}
+        />
+        {/* Small core diamond, clear of the star's shoulder vertices
+            (STAR_INNER would pass exactly through them). */}
+        <path
+          d="M24 16 L32 24 L24 32 L16 24 Z"
+          stroke={stroke}
+          strokeWidth="1"
+          pathLength="1"
+          className="thread-path"
+          style={{ animationDelay: "1s" }}
         />
       </g>
     </svg>
