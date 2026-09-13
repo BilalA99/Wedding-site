@@ -127,7 +127,13 @@ export function GuestbookApp({
   }, [step]);
 
   // Move focus to the step heading on transitions (screen-reader context).
+  // Skipped on first render so the page doesn't load with a focus ring.
+  const firstRenderRef = useRef(true);
   useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
     headingRef.current?.focus();
   }, [step]);
 
