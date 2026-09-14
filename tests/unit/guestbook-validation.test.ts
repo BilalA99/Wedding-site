@@ -188,3 +188,60 @@ describe("adminEditEntrySchema", () => {
     }
   });
 });
+
+describe("uploadSessionSchema — lanes and batches", () => {
+  it("defaults kind to message", () => {
+    const result = uploadSessionSchema.safeParse(base);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.kind).toBe("message");
+  });
+
+  it("event_media allows clips longer than 2 minutes (up to 15)", () => {
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        kind: "event_media",
+        durationSeconds: 600,
+      }).success,
+    ).toBe(true);
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        kind: "event_media",
+        durationSeconds: 905,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("message lane still enforces the 2-minute rule", () => {
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        kind: "message",
+        durationSeconds: 600,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a uuid batchId and rejects junk", () => {
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        kind: "event_media",
+        batchId: "3f2f1f38-9d1c-4e7a-b7f3-0a4c8f7a1e2d",
+      }).success,
+    ).toBe(true);
+    expect(
+      uploadSessionSchema.safeParse({ ...base, batchId: "not-a-uuid" }).success,
+    ).toBe(false);
+    expect(
+      uploadSessionSchema.safeParse({ ...base, batchId: null }).success,
+    ).toBe(true);
+  });
+
+  it("rejects unknown kinds", () => {
+    expect(
+      uploadSessionSchema.safeParse({ ...base, kind: "livestream" }).success,
+    ).toBe(false);
+  });
+});

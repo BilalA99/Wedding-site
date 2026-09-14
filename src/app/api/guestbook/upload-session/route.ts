@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   // Generous limits: a wedding venue shares one IP across every guest, so
   // abuse is caught by honeypot + validation + size caps, not strict IPs.
   const clientKey = clientKeyFromHeaders(request.headers);
-  if (!rateLimit(`gb-session:${clientKey}`, 120, 10 * 60_000)) {
+  if (!rateLimit(`gb-session:${clientKey}`, 300, 10 * 60_000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment and try again." },
       { status: 429 },
@@ -66,6 +66,8 @@ export async function POST(request: Request) {
       message: input.message ?? null,
       event_type: input.event,
       media_type: input.mediaType,
+      kind: input.kind,
+      batch_id: input.batchId ?? null,
       drive_folder_id: folderId,
       original_file_name: sanitizeOriginalFileName(input.fileName),
       stored_file_name: name,
@@ -110,6 +112,7 @@ export async function POST(request: Request) {
       new_state: {
         event: input.event,
         media_type: input.mediaType,
+        kind: input.kind,
         file_size: input.fileSize,
       },
     });

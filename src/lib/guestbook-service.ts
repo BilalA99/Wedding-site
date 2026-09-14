@@ -3,6 +3,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type {
   GuestbookEvent,
+  GuestbookKind,
   GuestbookMediaType,
 } from "@/lib/guestbook-shared";
 
@@ -13,6 +14,8 @@ export interface GuestbookEntry {
   message: string | null;
   event_type: GuestbookEvent;
   media_type: GuestbookMediaType;
+  kind: GuestbookKind;
+  batch_id: string | null;
   drive_file_id: string | null;
   drive_thumbnail_file_id: string | null;
   drive_folder_id: string | null;
@@ -39,6 +42,8 @@ export async function upsertPendingEntry(fields: {
   message?: string | null;
   event_type: GuestbookEvent;
   media_type: GuestbookMediaType;
+  kind: GuestbookKind;
+  batch_id?: string | null;
   drive_folder_id: string;
   original_file_name: string;
   stored_file_name: string;
@@ -60,6 +65,7 @@ export async function upsertPendingEntry(fields: {
     ...fields,
     guest_name: fields.guest_name ?? null,
     message: fields.message ?? null,
+    batch_id: fields.batch_id ?? null,
     duration_seconds:
       fields.duration_seconds == null
         ? null

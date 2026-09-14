@@ -1,4 +1,5 @@
 import { test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 /**
  * Guestbook visual audit capture — not assertions. Run with:
@@ -61,8 +62,9 @@ test("guestbook photo preview 390", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApis(page);
   await page.goto("/guestbook?event=henna");
+  await page.getByRole("button", { name: /leave us a message/i }).click();
   await page
-    .locator('input[type="file"][accept^="image"]')
+    .locator('input[type="file"][accept^="image"]:not([multiple])')
     .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
   await page.getByRole("heading", { name: /your memory/i }).waitFor();
   await page.getByLabel(/your name/i).fill("Amal & Family");
@@ -80,8 +82,9 @@ test("guestbook uploading 390", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApis(page, { delayMs: 6000 });
   await page.goto("/guestbook?event=wedding");
+  await page.getByRole("button", { name: /leave us a message/i }).click();
   await page
-    .locator('input[type="file"][accept^="image"]')
+    .locator('input[type="file"][accept^="image"]:not([multiple])')
     .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
   await page.getByRole("button", { name: /upload photo/i }).click();
   await page.getByRole("heading", { name: /uploading your memory/i }).waitFor();
@@ -93,8 +96,9 @@ test("guestbook success 390", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApis(page);
   await page.goto("/guestbook?event=wedding");
+  await page.getByRole("button", { name: /leave us a message/i }).click();
   await page
-    .locator('input[type="file"][accept^="image"]')
+    .locator('input[type="file"][accept^="image"]:not([multiple])')
     .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
   await page.getByRole("button", { name: /upload photo/i }).click();
   await page.getByRole("heading", { name: /memory saved/i }).waitFor();
@@ -106,6 +110,7 @@ test("guestbook video preview 390", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockApis(page);
   await page.goto("/guestbook");
+  await page.getByRole("button", { name: /leave us a message/i }).click();
   await page
     .locator('input[type="file"][accept^="video/mp4"]')
     .setInputFiles("public/video/hero-embroidery.mp4");
@@ -113,6 +118,45 @@ test("guestbook video preview 390", async ({ page }) => {
   await page.waitForTimeout(1000);
   await page.screenshot({
     path: "tests/visual/out/gb-video-preview-390.png",
+    fullPage: true,
+  });
+});
+
+test("guestbook message chooser 390", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/guestbook?event=wedding");
+  await page.getByRole("button", { name: /leave us a message/i }).click();
+  await page.waitForTimeout(1000);
+  await page.screenshot({
+    path: "tests/visual/out/gb-msg-choose-390.png",
+    fullPage: true,
+  });
+});
+
+test("guestbook dump review 390", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/guestbook?event=henna");
+  await page.getByRole("button", { name: /share photos & videos/i }).click();
+  await page.waitForTimeout(600);
+  await page.screenshot({
+    path: "tests/visual/out/gb-dump-empty-390.png",
+    fullPage: true,
+  });
+  await page.locator('input[type="file"][multiple]').setInputFiles([
+    { name: "one.png", mimeType: "image/png", buffer: TINY_PNG },
+    { name: "two.png", mimeType: "image/png", buffer: TINY_PNG },
+    { name: "three.png", mimeType: "image/png", buffer: TINY_PNG },
+    {
+      name: "clip.mp4",
+      mimeType: "video/mp4",
+      buffer: readFileSync("public/video/hero-embroidery.mp4"),
+    },
+  ]);
+  await page.getByText(/4 memories selected/i).waitFor({ timeout: 15_000 });
+  await page.getByLabel(/your name/i).fill("Amal & Family");
+  await page.waitForTimeout(600);
+  await page.screenshot({
+    path: "tests/visual/out/gb-dump-review-390.png",
     fullPage: true,
   });
 });

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 /**
- * Guestbook guest journey with the network mocked at the app's API boundary
+ * Guestbook guest journeys with the network mocked at the app's API boundary
  * and at Google's upload endpoint — no real Drive or Supabase writes. The
  * real upload path is exercised in production smoke testing instead.
  */
@@ -18,6 +18,9 @@ const TINY_PNG = Buffer.from(
 );
 
 const VIDEO_FIXTURE = path.resolve("public/video/hero-embroidery.mp4");
+
+const MSG_CARD = /leave us a message/i;
+const DUMP_CARD = /share photos & videos/i;
 
 async function mockUploadApis(page: Page) {
   await page.route("**/api/guestbook/upload-session", async (route) => {
@@ -42,12 +45,34 @@ async function mockUploadApis(page: Page) {
   });
 }
 
+async function openMessageLane(page: Page, query = "") {
+  await page.goto(`/guestbook${query}`);
+  await page.getByRole("button", { name: MSG_CARD }).click();
+  await expect(
+    page.getByRole("heading", { name: /leave us a message/i }),
+  ).toBeVisible();
+}
+
+async function openDumpLane(page: Page, query = "") {
+  await page.goto(`/guestbook${query}`);
+  await page.getByRole("button", { name: DUMP_CARD }).click();
+  await expect(
+    page.getByRole("heading", { name: /share photos & videos/i }),
+  ).toBeVisible();
+}
+
 test.describe("guestbook — welcome", () => {
-  test("shows the three actions and event choice", async ({ page }) => {
+  test("shows both lanes", async ({ page }) => {
     await page.goto("/guestbook");
     await expect(
-      page.getByRole("heading", { name: /leave us a message/i }),
+      page.getByRole("heading", { name: /share a memory/i }),
     ).toBeVisible();
+    await expect(page.getByRole("button", { name: MSG_CARD })).toBeVisible();
+    await expect(page.getByRole("button", { name: DUMP_CARD })).toBeVisible();
+  });
+
+  test("message lane shows actions and event choice", async ({ page }) => {
+    await openMessageLane(page);
     await expect(
       page.getByRole("button", { name: /record a video/i }),
     ).toBeVisible();
@@ -60,16 +85,21 @@ test.describe("guestbook — welcome", () => {
     await expect(page.getByRole("radio", { name: "Henna" })).toBeVisible();
   });
 
-  test("?event=henna preselects Henna", async ({ page }) => {
-    await page.goto("/guestbook?event=henna");
+  test("?event=henna preselects Henna in the message lane", async ({ page }) => {
+    await openMessageLane(page, "?event=henna");
     await expect(page.getByRole("radio", { name: "Henna" })).toHaveAttribute(
       "aria-checked",
       "true",
     );
   });
 
-  test("?event=wedding preselects Wedding", async ({ page }) => {
-    await page.goto("/guestbook?event=wedding");
+  test("?event=wedding preselects Wedding in both lanes", async ({ page }) => {
+    await openMessageLane(page, "?event=wedding");
+    await expect(page.getByRole("radio", { name: "Wedding" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await openDumpLane(page, "?event=wedding");
     await expect(page.getByRole("radio", { name: "Wedding" })).toHaveAttribute(
       "aria-checked",
       "true",
@@ -77,13 +107,15 @@ test.describe("guestbook — welcome", () => {
   });
 });
 
-test.describe("guestbook — photo flow", () => {
-  test("select → preview → details → upload → success", async ({ page }) => {
+test.describe("guestbook — message flow", () => {
+  test("photo: select → preview → details → upload → success", async ({
+    page,
+  }) => {
     await mockUploadApis(page);
-    await page.goto("/guestbook?event=wedding");
+    await openMessageLane(page, "?event=wedding");
 
     await page
-      .locator('input[type="file"][accept^="image"]')
+      .locator('input[type="file"][accept^="image"]:not([multiple])')
       .setInputFiles({
         name: "family.png",
         mimeType: "image/png",
@@ -93,7 +125,9 @@ test.describe("guestbook — photo flow", () => {
     await expect(
       page.getByRole("heading", { name: /your memory/i }),
     ).toBeVisible();
-    await expect(page.getByAltText(/preview of your selected photo/i)).toBeVisible();
+    await expect(
+      page.getByAltText(/preview of your selected photo/i),
+    ).toBeVisible();
 
     await page.getByLabel(/your name/i).fill("E2E Guest");
     await page.getByLabel(/a short note/i).fill("Mabrouk from the E2E suite!");
@@ -103,32 +137,32 @@ test.describe("guestbook — photo flow", () => {
       page.getByRole("heading", { name: /memory saved/i }),
     ).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByRole("button", { name: /leave another message/i }),
+      page.getByRole("button", { name: /share more memories/i }),
     ).toBeVisible();
   });
 
-  test("leave another message returns to a clean chooser", async ({ page }) => {
-    await mockUploadApis(page);
-    await page.goto("/guestbook?event=wedding");
-    await page
-      .locator('input[type="file"][accept^="image"]')
-      .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
-    await page.getByRole("button", { name: /upload photo/i }).click();
-    await page.getByRole("button", { name: /leave another message/i }).click({
-      timeout: 20_000,
-    });
-    await expect(
-      page.getByRole("heading", { name: /leave us a message/i }),
-    ).toBeVisible();
-  });
-});
-
-test.describe("guestbook — video flow", () => {
-  test("select video → preview shows duration → upload → success", async ({
+  test("share more memories returns to the welcome chooser", async ({
     page,
   }) => {
     await mockUploadApis(page);
-    await page.goto("/guestbook");
+    await openMessageLane(page, "?event=wedding");
+    await page
+      .locator('input[type="file"][accept^="image"]:not([multiple])')
+      .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
+    await page.getByRole("button", { name: /upload photo/i }).click();
+    await page
+      .getByRole("button", { name: /share more memories/i })
+      .click({ timeout: 20_000 });
+    await expect(
+      page.getByRole("heading", { name: /share a memory/i }),
+    ).toBeVisible();
+  });
+
+  test("video: select → preview shows duration → upload → success", async ({
+    page,
+  }) => {
+    await mockUploadApis(page);
+    await openMessageLane(page);
 
     await page
       .locator('input[type="file"][accept^="video/mp4"]')
@@ -150,11 +184,72 @@ test.describe("guestbook — video flow", () => {
   });
 });
 
+test.describe("guestbook — batch dump flow", () => {
+  test("multi-select → review grid → upload → success", async ({ page }) => {
+    await mockUploadApis(page);
+    await openDumpLane(page, "?event=wedding");
+
+    await page.locator('input[type="file"][multiple]').setInputFiles([
+      { name: "dance.png", mimeType: "image/png", buffer: TINY_PNG },
+      {
+        name: "clip.mp4",
+        mimeType: "video/mp4",
+        buffer: readFileSync(VIDEO_FIXTURE),
+      },
+    ]);
+
+    await expect(page.getByText(/2 memories selected/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    await page.getByLabel(/your name/i).fill("E2E Batch Guest");
+    await page.getByLabel(/a short note/i).fill("From the dance floor!");
+    await page.getByRole("button", { name: /upload 2 memories/i }).click();
+
+    await expect(
+      page.getByRole("heading", { name: /memories saved/i }),
+    ).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByText(/2 memories from the celebration/i)).toBeVisible();
+  });
+
+  test("oversized files are marked rejected and excluded from the count", async ({
+    page,
+  }) => {
+    await openDumpLane(page);
+    await page.locator('input[type="file"][multiple]').setInputFiles([
+      { name: "ok.png", mimeType: "image/png", buffer: TINY_PNG },
+      {
+        name: "huge.png",
+        mimeType: "image/png",
+        buffer: Buffer.alloc(26 * 1024 * 1024, 7),
+      },
+    ]);
+    await expect(page.getByText(/1 memory selected/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/1 file can't be uploaded/i)).toBeVisible();
+    await expect(page.getByText(/too large/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /upload 1 memory$/i }),
+    ).toBeVisible();
+  });
+
+  test("items can be removed before uploading", async ({ page }) => {
+    await openDumpLane(page);
+    await page.locator('input[type="file"][multiple]').setInputFiles([
+      { name: "one.png", mimeType: "image/png", buffer: TINY_PNG },
+      { name: "two.png", mimeType: "image/png", buffer: TINY_PNG },
+    ]);
+    await expect(page.getByText(/2 memories selected/i)).toBeVisible();
+    await page.getByRole("button", { name: /remove one\.png/i }).click();
+    await expect(page.getByText(/1 memory selected/i)).toBeVisible();
+  });
+});
+
 test.describe("guestbook — validation", () => {
-  test("oversized photo is rejected before upload", async ({ page }) => {
-    await page.goto("/guestbook");
+  test("oversized message photo is rejected before upload", async ({ page }) => {
+    await openMessageLane(page);
     await page
-      .locator('input[type="file"][accept^="image"]')
+      .locator('input[type="file"][accept^="image"]:not([multiple])')
       .setInputFiles({
         name: "huge.png",
         mimeType: "image/png",
@@ -163,7 +258,6 @@ test.describe("guestbook — validation", () => {
     await expect(
       page.getByRole("alert").filter({ hasText: /too large/i }),
     ).toBeVisible();
-    // Still on the chooser — nothing was uploaded.
     await expect(
       page.getByRole("heading", { name: /leave us a message/i }),
     ).toBeVisible();
@@ -172,7 +266,7 @@ test.describe("guestbook — validation", () => {
   test("wrong file type is rejected with a friendly message", async ({
     page,
   }) => {
-    await page.goto("/guestbook");
+    await openMessageLane(page);
     await page
       .locator('input[type="file"][accept^="video/mp4"]')
       .setInputFiles({
@@ -197,15 +291,14 @@ test.describe("guestbook — validation", () => {
         },
       }),
     );
-    await page.goto("/guestbook");
+    await openMessageLane(page);
     await page
-      .locator('input[type="file"][accept^="image"]')
+      .locator('input[type="file"][accept^="image"]:not([multiple])')
       .setInputFiles({ name: "a.png", mimeType: "image/png", buffer: TINY_PNG });
     await page.getByRole("button", { name: /upload photo/i }).click();
     await expect(
       page.getByRole("alert").filter({ hasText: /temporarily unavailable/i }),
     ).toBeVisible({ timeout: 15_000 });
-    // The guest's selection is intact for retry.
     await expect(
       page.getByRole("button", { name: /upload photo/i }),
     ).toBeVisible();

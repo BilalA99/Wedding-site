@@ -31,12 +31,16 @@ export default async function AdminGuestbookPage() {
 
   const stats = [
     { label: "Memories", value: live.length },
+    { label: "Messages", value: live.filter((e) => e.kind === "message").length },
+    {
+      label: "From events",
+      value: live.filter((e) => e.kind === "event_media").length,
+    },
     { label: "Videos", value: live.filter((e) => e.media_type === "video").length },
     { label: "Photos", value: live.filter((e) => e.media_type === "photo").length },
     { label: "Favorites", value: live.filter((e) => e.favorite).length },
     { label: "Henna", value: live.filter((e) => e.event_type === "henna").length },
     { label: "Wedding", value: live.filter((e) => e.event_type === "wedding").length },
-    { label: "General", value: live.filter((e) => e.event_type === "general").length },
     { label: "Storage used", value: formatBytes(storageBytes) },
   ];
 

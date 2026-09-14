@@ -20,7 +20,7 @@ export const runtime = "nodejs";
  */
 export async function POST(request: Request) {
   const clientKey = clientKeyFromHeaders(request.headers);
-  if (!rateLimit(`gb-complete:${clientKey}`, 120, 10 * 60_000)) {
+  if (!rateLimit(`gb-complete:${clientKey}`, 300, 10 * 60_000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment and try again." },
       { status: 429 },

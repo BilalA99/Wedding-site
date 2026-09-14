@@ -18,6 +18,8 @@ import {
 
 type Filter =
   | "all"
+  | "messages"
+  | "event_media"
   | "videos"
   | "photos"
   | "henna"
@@ -30,6 +32,8 @@ type Sort = "newest" | "oldest" | "largest";
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "all", label: "All" },
+  { value: "messages", label: "Messages" },
+  { value: "event_media", label: "From Events" },
   { value: "videos", label: "Videos" },
   { value: "photos", label: "Photos" },
   { value: "henna", label: "Henna" },
@@ -58,6 +62,10 @@ export function GuestbookGallery({ entries }: { entries: GuestbookEntry[] }) {
     let list = entries.filter((e) =>
       filter === "deleted" ? e.status === "deleted" : e.status === "complete",
     );
+    if (filter === "messages") list = list.filter((e) => e.kind === "message");
+    if (filter === "event_media") {
+      list = list.filter((e) => e.kind === "event_media");
+    }
     if (filter === "videos") list = list.filter((e) => e.media_type === "video");
     if (filter === "photos") list = list.filter((e) => e.media_type === "photo");
     if (filter === "henna" || filter === "wedding" || filter === "general") {
@@ -242,7 +250,8 @@ function EntryCard({
             {entry.guest_name ?? "Anonymous"}
           </p>
           <p className="type-caps mt-0.5 text-[0.52rem] text-sand/60">
-            {EVENT_LABEL[entry.event_type]} ·{" "}
+            {entry.kind === "message" ? "Message" : EVENT_LABEL[entry.event_type]}{" "}
+            ·{" "}
             {new Date(entry.created_at).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
@@ -324,6 +333,7 @@ function EntryModal({
               {entry.guest_name ?? "Anonymous"}
             </p>
             <p className="type-caps mt-1 text-[0.55rem] text-sand/70">
+              {entry.kind === "message" ? "Message" : "Event media"} ·{" "}
               {EVENT_LABEL[entry.event_type]} · {entry.media_type} ·{" "}
               {entry.file_size != null ? formatBytes(entry.file_size) : "—"}
               {entry.duration_seconds != null &&

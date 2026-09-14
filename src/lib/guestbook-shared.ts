@@ -7,8 +7,15 @@ export type GuestbookEvent = (typeof GUESTBOOK_EVENTS)[number];
 export const GUESTBOOK_MEDIA_TYPES = ["video", "photo"] as const;
 export type GuestbookMediaType = (typeof GUESTBOOK_MEDIA_TYPES)[number];
 
-/** Hard product rule: guest videos max out at 2 minutes. */
+/** Two lanes: a video/photo MESSAGE to the couple, or EVENT MEDIA captured
+ * at the henna/wedding and shared in a batch. */
+export const GUESTBOOK_KINDS = ["message", "event_media"] as const;
+export type GuestbookKind = (typeof GUESTBOOK_KINDS)[number];
+
+/** Hard product rule: video MESSAGES max out at 2 minutes. */
 export const MAX_VIDEO_DURATION_SECONDS = 120;
+/** Event clips can run longer — capped at 15 minutes. */
+export const MAX_EVENT_VIDEO_DURATION_SECONDS = 15 * 60;
 /** Slack for container metadata rounding (e.g. 120.4s recorded clips). */
 export const VIDEO_DURATION_TOLERANCE_SECONDS = 1;
 
@@ -25,6 +32,15 @@ export const MAX_MESSAGE_LENGTH = 500;
 /** Drive resumable chunks must be multiples of 256 KiB; 8 MiB balances
  * per-chunk retry cost against request overhead on venue Wi-Fi. */
 export const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024;
+
+/** One "Share Photos & Videos" batch is capped at 30 files. */
+export const MAX_BATCH_ITEMS = 30;
+
+export function maxDurationFor(kind: GuestbookKind): number {
+  return kind === "event_media"
+    ? MAX_EVENT_VIDEO_DURATION_SECONDS
+    : MAX_VIDEO_DURATION_SECONDS;
+}
 
 export const VIDEO_MIME_TYPES = [
   "video/mp4",

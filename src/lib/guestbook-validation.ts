@@ -2,15 +2,16 @@ import { z } from "zod";
 
 import {
   GUESTBOOK_EVENTS,
+  GUESTBOOK_KINDS,
   GUESTBOOK_MEDIA_TYPES,
   MAX_GUEST_NAME_LENGTH,
   MAX_MESSAGE_LENGTH,
   MAX_THUMBNAIL_BYTES,
-  MAX_VIDEO_DURATION_SECONDS,
   THUMBNAIL_MIME_TYPES,
   VIDEO_DURATION_TOLERANCE_SECONDS,
   isAllowedMime,
   maxBytesFor,
+  maxDurationFor,
 } from "@/lib/guestbook-shared";
 
 /** Trims and collapses inner whitespace runs; empty → undefined. */
@@ -27,6 +28,8 @@ export const uploadSessionSchema = z
     submissionId: z.uuid(),
     event: z.enum(GUESTBOOK_EVENTS),
     mediaType: z.enum(GUESTBOOK_MEDIA_TYPES),
+    kind: z.enum(GUESTBOOK_KINDS).default("message"),
+    batchId: z.uuid().nullable().optional(),
     fileName: z.string().min(1).max(300),
     mimeType: z.string().min(1).max(100),
     fileSize: z.number().int().positive(),
@@ -65,12 +68,15 @@ export const uploadSessionSchema = z
       val.mediaType === "video" &&
       val.durationSeconds != null &&
       val.durationSeconds >
-        MAX_VIDEO_DURATION_SECONDS + VIDEO_DURATION_TOLERANCE_SECONDS
+        maxDurationFor(val.kind) + VIDEO_DURATION_TOLERANCE_SECONDS
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["durationSeconds"],
-        message: "This video is longer than 2 minutes.",
+        message:
+          val.kind === "event_media"
+            ? "This video is longer than 15 minutes."
+            : "This video is longer than 2 minutes.",
       });
     }
   });
