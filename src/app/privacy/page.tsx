@@ -4,6 +4,8 @@ import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Privacy — Bilal Ahmad & Jennah Samhan",
+  description:
+    "How Bilal & Jennah's wedding site and private guestbook handle your photos, videos, and details.",
   robots: { index: false, follow: false },
 };
 

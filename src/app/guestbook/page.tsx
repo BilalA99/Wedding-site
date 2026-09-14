@@ -6,11 +6,27 @@ import {
   type GuestbookEvent,
 } from "@/lib/guestbook-shared";
 
+const GUESTBOOK_TITLE = "Share a Memory — Bilal Ahmad & Jennah Samhan";
+const GUESTBOOK_DESCRIPTION =
+  "Leave Bilal & Jennah a video message, or share your photos and videos from the Henna and the Wedding — straight from your phone.";
+
 export const metadata: Metadata = {
-  title: "Leave Us a Message — Bilal Ahmad & Jennah Samhan",
-  description:
-    "Record a video or share a photo for Bilal & Jennah's wedding guestbook.",
+  title: GUESTBOOK_TITLE,
+  description: GUESTBOOK_DESCRIPTION,
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "Share a Memory",
+    description: GUESTBOOK_DESCRIPTION,
+    type: "website",
+    url: "/guestbook",
+    siteName: "Bilal Ahmad & Jennah Samhan",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Share a Memory",
+    description: GUESTBOOK_DESCRIPTION,
+  },
 };
 
 export default async function GuestbookPage({
