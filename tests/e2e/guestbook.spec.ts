@@ -233,6 +233,31 @@ test.describe("guestbook — batch dump flow", () => {
     ).toBeVisible();
   });
 
+  test("selecting videos never blocks the review screen", async ({ page }) => {
+    // Regression: metadata used to be probed synchronously per video before
+    // the grid appeared, which on a real phone forces the OS to export every
+    // file out of Photos (iCloud download included) and froze the selection
+    // screen for minutes with the Upload button disabled the whole time.
+    // Probing is now backgrounded, so the batch must be uploadable at once.
+    await openDumpLane(page);
+    const video = {
+      name: "clip.mp4",
+      mimeType: "video/mp4",
+      buffer: readFileSync(VIDEO_FIXTURE),
+    };
+    await page.locator('input[type="file"][multiple]').setInputFiles([
+      { ...video, name: "clip-a.mp4" },
+      { ...video, name: "clip-b.mp4" },
+      { name: "dance.png", mimeType: "image/png", buffer: TINY_PNG },
+    ]);
+
+    // Tight timeouts: these must be true immediately, not after probing.
+    await expect(
+      page.getByRole("button", { name: /upload 3 memories/i }),
+    ).toBeEnabled({ timeout: 2_000 });
+    await expect(page.getByText(/preparing your files/i)).toHaveCount(0);
+  });
+
   test("items can be removed before uploading", async ({ page }) => {
     await openDumpLane(page);
     await page.locator('input[type="file"][multiple]').setInputFiles([

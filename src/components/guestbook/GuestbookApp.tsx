@@ -74,6 +74,8 @@ interface DumpItem {
   durationSeconds: number | null;
   width: number | null;
   height: number | null;
+  /** Metadata is still being read in the background. Never blocks upload. */
+  probing: boolean;
   status: DumpStatus;
   /** Why the file can't be uploaded (rejected) or failed. */
   note: string | null;
@@ -160,6 +162,9 @@ export function GuestbookApp({
   // Source of truth for batch items lives in this ref (mutated only inside
   // handlers); setDumpItems mirrors it into state for rendering.
   const dumpItemsRef = useRef<DumpItem[]>([]);
+  // Bumped when the batch is cleared, so a background probe still in flight
+  // can tell it belongs to an abandoned batch and stop.
+  const probeGenerationRef = useRef(0);
 
   /** MediaRecorder support is unknowable on the server, so the markup renders
    * as "no recorder" and settles on the client without a hydration mismatch. */
@@ -485,10 +490,64 @@ export function GuestbookApp({
     [],
   );
 
-  const handleDumpFiles = useCallback(async (files: FileList | null) => {
+  /**
+   * Reads video metadata one file at a time, in the background.
+   *
+   * This cannot happen while the guest is still on the picker: probing a video
+   * forces the OS to materialize the file — on iOS that means exporting it out
+   * of Photos, including an iCloud download for anything not on-device — and
+   * doing that for a whole camera-roll dump froze the selection screen for
+   * minutes. Upload never waits on this; the results only enrich the tiles.
+   */
+  const probeDumpVideos = useCallback(
+    async (items: DumpItem[], generation: number) => {
+      for (const item of items) {
+        if (probeGenerationRef.current !== generation) return;
+
+        // Skip anything the guest removed, or that is already uploading.
+        const before = dumpItemsRef.current.find(
+          (i) => i.submissionId === item.submissionId,
+        );
+        if (!before || before.status !== "ready") continue;
+
+        const meta = await readVideoMetadata(item.file);
+        if (probeGenerationRef.current !== generation) return;
+
+        const after = dumpItemsRef.current.find(
+          (i) => i.submissionId === item.submissionId,
+        );
+        if (!after) continue;
+
+        const patch: Partial<DumpItem> = {
+          durationSeconds: meta.durationSeconds,
+          width: meta.width,
+          height: meta.height,
+          probing: false,
+        };
+
+        const tooLong =
+          meta.durationSeconds != null &&
+          meta.durationSeconds >
+            maxDurationFor("event_media") + VIDEO_DURATION_TOLERANCE_SECONDS;
+
+        // Only a file that has not started uploading can still be turned away.
+        if (tooLong && after.status === "ready") {
+          patch.status = "rejected";
+          patch.note = "Longer than 15 minutes";
+        } else if (isLowResolution(meta.width, meta.height)) {
+          patch.note = `${formatResolution(meta.width, meta.height)} — a compressed copy`;
+        }
+
+        updateItem(item.submissionId, patch);
+      }
+    },
+    [updateItem],
+  );
+
+  const handleDumpFiles = useCallback(
+    (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setError(null);
-    setInspecting(true);
 
     const existing = dumpItemsRef.current;
     let readyCount = existing.filter((i) => i.status !== "rejected").length;
@@ -504,6 +563,7 @@ export function GuestbookApp({
         durationSeconds: null,
         width: null,
         height: null,
+        probing: false,
         status: "ready",
         note: null,
         sentBytes: 0,
@@ -530,50 +590,27 @@ export function GuestbookApp({
         continue;
       }
 
-      let durationSeconds: number | null = null;
-      let width: number | null = null;
-      let height: number | null = null;
-      if (mediaType === "video") {
-        const meta = await readVideoMetadata(file);
-        durationSeconds = meta.durationSeconds;
-        width = meta.width;
-        height = meta.height;
-        if (
-          durationSeconds != null &&
-          durationSeconds >
-            maxDurationFor("event_media") + VIDEO_DURATION_TOLERANCE_SECONDS
-        ) {
-          additions.push({
-            ...base,
-            durationSeconds,
-            width,
-            height,
-            status: "rejected",
-            note: "Longer than 15 minutes",
-          });
-          continue;
-        }
-      }
-
+      // Everything above is free — type and size are metadata, no bytes are
+      // touched. Duration and resolution are read later, off the hot path.
       readyCount += 1;
       additions.push({
         ...base,
         mediaType,
-        durationSeconds,
-        width,
-        height,
-        // Low-res files still upload — the note is advisory, not a rejection.
-        note: isLowResolution(width, height)
-          ? `${formatResolution(width, height)} — a compressed copy`
-          : null,
+        probing: mediaType === "video",
         previewUrl: mediaType === "photo" ? URL.createObjectURL(file) : null,
       });
     }
 
     dumpItemsRef.current = [...dumpItemsRef.current, ...additions];
     setDumpItems(dumpItemsRef.current);
-    setInspecting(false);
-  }, []);
+
+    void probeDumpVideos(
+      additions.filter((i) => i.mediaType === "video" && i.status === "ready"),
+      probeGenerationRef.current,
+    );
+    },
+    [probeDumpVideos],
+  );
 
   const removeDumpItem = useCallback((submissionId: string) => {
     const item = dumpItemsRef.current.find(
@@ -590,6 +627,8 @@ export function GuestbookApp({
     for (const item of dumpItemsRef.current) {
       if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
     }
+    // Orphan any probe still running against the batch being thrown away.
+    probeGenerationRef.current += 1;
     dumpItemsRef.current = [];
     setDumpItems([]);
     setBatchId(crypto.randomUUID());
@@ -1221,7 +1260,6 @@ export function GuestbookApp({
               <button
                 type="button"
                 onClick={() => dumpInputRef.current?.click()}
-                disabled={inspecting}
                 className="mt-8 flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-powder bg-ice/60 px-6 py-10 transition-colors duration-300 hover:border-dusty disabled:opacity-50"
               >
                 <StackIcon className="h-9 w-9 text-blue-deep" />
@@ -1245,8 +1283,7 @@ export function GuestbookApp({
                   <button
                     type="button"
                     onClick={() => dumpInputRef.current?.click()}
-                    disabled={inspecting}
-                    className="type-caps min-h-9 px-2 text-[0.6rem] text-blue-deep transition-colors hover:text-ink disabled:opacity-50"
+                    className="type-caps min-h-9 px-2 text-[0.6rem] text-blue-deep transition-colors hover:text-ink"
                   >
                     + Add More
                   </button>
@@ -1284,11 +1321,6 @@ export function GuestbookApp({
                     {rejectedItems.length}{" "}
                     {rejectedItems.length === 1 ? "file" : "files"} can&apos;t be
                     uploaded — see the marked tiles.
-                  </p>
-                )}
-                {inspecting && (
-                  <p className="mt-3 text-sm text-ink-soft" aria-live="polite">
-                    Preparing your files…
                   </p>
                 )}
               </div>
@@ -1340,7 +1372,7 @@ export function GuestbookApp({
                 type="button"
                 whileTap={reducedMotion ? undefined : { scale: 0.98 }}
                 onClick={() => void startDumpUpload()}
-                disabled={uploadableCount === 0 || inspecting}
+                disabled={uploadableCount === 0}
                 className={primaryBtnClass}
               >
                 {uploadableCount === 0
@@ -1527,10 +1559,17 @@ function DumpTile({ item }: { item: DumpItem }) {
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-blue-deep">
           <FilmIcon className="h-6 w-6" />
-          {item.durationSeconds != null && (
+          {item.durationSeconds != null ? (
             <span className="tabular text-[0.65rem] text-ink-soft">
               {formatDuration(item.durationSeconds)}
+              {formatResolution(item.width, item.height) &&
+                ` · ${formatResolution(item.width, item.height)}`}
             </span>
+          ) : (
+            item.probing && (
+              // Purely informational — the file is already queued and uploadable.
+              <span className="text-[0.6rem] text-ink-soft/70">Video</span>
+            )
           )}
         </div>
       )}
@@ -1550,8 +1589,14 @@ function DumpTile({ item }: { item: DumpItem }) {
           </svg>
         </span>
       )}
-      {rejected && item.note && (
-        <span className="absolute inset-x-0 bottom-0 bg-error/85 px-1 py-0.5 text-center text-[0.55rem] leading-tight text-paper-pure">
+      {item.note && (
+        <span
+          className={`absolute inset-x-0 bottom-0 px-1 py-0.5 text-center text-[0.55rem] leading-tight text-paper-pure ${
+            // A low-res note is advisory — the file still uploads, so it must
+            // not wear the same red as a file that was turned away.
+            rejected ? "bg-error/85" : "bg-ink/70"
+          }`}
+        >
           {item.note}
         </span>
       )}
