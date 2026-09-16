@@ -7,6 +7,8 @@ import type { GuestbookEntry } from "@/lib/guestbook-service";
 import {
   formatBytes,
   formatDuration,
+  formatResolution,
+  isLowResolution,
   type GuestbookEvent,
 } from "@/lib/guestbook-shared";
 import {
@@ -337,7 +339,21 @@ function EntryModal({
               {EVENT_LABEL[entry.event_type]} · {entry.media_type} ·{" "}
               {entry.file_size != null ? formatBytes(entry.file_size) : "—"}
               {entry.duration_seconds != null &&
-                ` · ${formatDuration(entry.duration_seconds)}`}{" "}
+                ` · ${formatDuration(entry.duration_seconds)}`}
+              {formatResolution(entry.video_width, entry.video_height) && (
+                <>
+                  {" · "}
+                  <span
+                    className={
+                      isLowResolution(entry.video_width, entry.video_height)
+                        ? "text-error"
+                        : "text-sand"
+                    }
+                  >
+                    {formatResolution(entry.video_width, entry.video_height)}
+                  </span>
+                </>
+              )}{" "}
               ·{" "}
               {new Date(entry.created_at).toLocaleString("en-US", {
                 month: "short",

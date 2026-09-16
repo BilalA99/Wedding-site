@@ -4,10 +4,13 @@ import {
   extensionForMime,
   formatBytes,
   formatDuration,
+  formatResolution,
   isAllowedMime,
+  isLowResolution,
   maxBytesFor,
   sanitizeOriginalFileName,
   storedFileName,
+  videoShortEdge,
 } from "@/lib/guestbook-shared";
 
 describe("isAllowedMime", () => {
@@ -86,5 +89,54 @@ describe("formatters", () => {
     expect(formatDuration(83)).toBe("1:23");
     expect(formatDuration(120)).toBe("2:00");
     expect(formatDuration(5)).toBe("0:05");
+  });
+});
+
+describe("videoShortEdge", () => {
+  it("is orientation-independent", () => {
+    expect(videoShortEdge(1920, 1080)).toBe(1080);
+    expect(videoShortEdge(1080, 1920)).toBe(1080);
+  });
+
+  it("rejects missing or nonsense dimensions", () => {
+    expect(videoShortEdge(null, 1080)).toBeNull();
+    expect(videoShortEdge(1920, undefined)).toBeNull();
+    expect(videoShortEdge(0, 1080)).toBeNull();
+    expect(videoShortEdge(-1920, -1080)).toBeNull();
+  });
+});
+
+describe("isLowResolution", () => {
+  it("flags recompressed shares below 720p", () => {
+    // What a WhatsApp/Instagram export typically lands at.
+    expect(isLowResolution(848, 480)).toBe(true);
+    expect(isLowResolution(640, 360)).toBe(true);
+  });
+
+  it("passes camera originals in both orientations", () => {
+    expect(isLowResolution(1920, 1080)).toBe(false);
+    expect(isLowResolution(1080, 1920)).toBe(false);
+    expect(isLowResolution(1280, 720)).toBe(false);
+    expect(isLowResolution(3840, 2160)).toBe(false);
+  });
+
+  it("never flags a file it could not measure", () => {
+    // HEVC that the browser refused to decode — silence beats a false alarm.
+    expect(isLowResolution(null, null)).toBe(false);
+    expect(isLowResolution(undefined, undefined)).toBe(false);
+  });
+});
+
+describe("formatResolution", () => {
+  it("labels by short edge, as video conventionally is", () => {
+    expect(formatResolution(1080, 1920)).toBe("1080p");
+    expect(formatResolution(1920, 1080)).toBe("1080p");
+    expect(formatResolution(1280, 720)).toBe("720p");
+    expect(formatResolution(848, 480)).toBe("480p");
+    expect(formatResolution(3840, 2160)).toBe("4K");
+  });
+
+  it("returns null when dimensions are unknown", () => {
+    expect(formatResolution(null, null)).toBeNull();
   });
 });

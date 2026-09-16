@@ -6,30 +6,52 @@
 
 const THUMB_MAX_WIDTH = 640;
 
-/** Reads a video's duration from its metadata without playing it. */
-export function readVideoDuration(file: File): Promise<number | null> {
+export interface VideoMetadata {
+  durationSeconds: number | null;
+  /** Intrinsic pixel dimensions, null when the browser can't decode the file. */
+  width: number | null;
+  height: number | null;
+}
+
+const NO_METADATA: VideoMetadata = {
+  durationSeconds: null,
+  width: null,
+  height: null,
+};
+
+/**
+ * Reads duration and intrinsic dimensions from a video's metadata without
+ * playing it. `videoWidth`/`videoHeight` are the decoded frame size, which is
+ * what we gate quality on — a guest who shares a WhatsApp copy reports 480,
+ * a straight-from-the-camera file reports 1080 or better.
+ */
+export function readVideoMetadata(file: File): Promise<VideoMetadata> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const video = document.createElement("video");
     video.preload = "metadata";
     video.muted = true;
 
-    const cleanup = (value: number | null) => {
+    const cleanup = (value: VideoMetadata) => {
       URL.revokeObjectURL(url);
       video.removeAttribute("src");
       video.load();
       resolve(value);
     };
 
-    const timer = setTimeout(() => cleanup(null), 10_000);
+    const timer = setTimeout(() => cleanup(NO_METADATA), 10_000);
     video.onloadedmetadata = () => {
       clearTimeout(timer);
       const d = video.duration;
-      cleanup(Number.isFinite(d) && d > 0 ? d : null);
+      cleanup({
+        durationSeconds: Number.isFinite(d) && d > 0 ? d : null,
+        width: video.videoWidth || null,
+        height: video.videoHeight || null,
+      });
     };
     video.onerror = () => {
       clearTimeout(timer);
-      cleanup(null);
+      cleanup(NO_METADATA);
     };
     video.src = url;
   });

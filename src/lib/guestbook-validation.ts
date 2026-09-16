@@ -34,6 +34,10 @@ export const uploadSessionSchema = z
     mimeType: z.string().min(1).max(100),
     fileSize: z.number().int().positive(),
     durationSeconds: z.number().nonnegative().max(86_400).nullable().optional(),
+    /** Client-measured intrinsic dimensions; advisory only — recorded so the
+     * admin gallery can show quality, never used to reject an upload. */
+    videoWidth: z.number().int().positive().max(16_384).nullable().optional(),
+    videoHeight: z.number().int().positive().max(16_384).nullable().optional(),
     guestName: optionalTrimmed(MAX_GUEST_NAME_LENGTH),
     message: optionalTrimmed(MAX_MESSAGE_LENGTH),
     thumbnail: z

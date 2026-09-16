@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -14,10 +15,13 @@ import {
   MAX_GUEST_NAME_LENGTH,
   MAX_MESSAGE_LENGTH,
   MAX_VIDEO_DURATION_SECONDS,
+  MIN_VIDEO_SHORT_EDGE,
   VIDEO_DURATION_TOLERANCE_SECONDS,
   formatBytes,
   formatDuration,
+  formatResolution,
   isAllowedMime,
+  isLowResolution,
   maxBytesFor,
   maxDurationFor,
   type GuestbookEvent,
@@ -26,8 +30,10 @@ import {
 import {
   makePhotoThumbnail,
   makeVideoThumbnail,
-  readVideoDuration,
+  readVideoMetadata,
 } from "@/components/guestbook/media";
+import { recorderSupported } from "@/components/guestbook/recorder";
+import { VideoRecorder } from "@/components/guestbook/VideoRecorder";
 import {
   SessionExpiredError,
   UploadAbortedError,
@@ -51,6 +57,9 @@ interface SelectedMedia {
   mediaType: GuestbookMediaType;
   previewUrl: string;
   durationSeconds: number | null;
+  /** Intrinsic video dimensions; null for photos or undecodable files. */
+  width: number | null;
+  height: number | null;
   submissionId: string;
 }
 
@@ -63,6 +72,8 @@ interface DumpItem {
   /** Object URL for photo tiles; videos show an icon + duration instead. */
   previewUrl: string | null;
   durationSeconds: number | null;
+  width: number | null;
+  height: number | null;
   status: DumpStatus;
   /** Why the file can't be uploaded (rejected) or failed. */
   note: string | null;
@@ -97,6 +108,9 @@ function loadDraft(): { name?: string; message?: string; event?: GuestbookEvent 
     return {};
   }
 }
+
+/** Camera support can't change over the life of the page — nothing to subscribe to. */
+const subscribeNever = () => () => {};
 
 function mediaTypeOf(file: File): GuestbookMediaType | null {
   const mime = (file.type || "").toLowerCase();
@@ -134,6 +148,7 @@ export function GuestbookApp({
   );
   const [dumpFinished, setDumpFinished] = useState(false);
   const [dumpDoneCount, setDumpDoneCount] = useState(0);
+  const [recording, setRecording] = useState(false);
 
   const thumbnailRef = useRef<Blob | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -145,6 +160,14 @@ export function GuestbookApp({
   // Source of truth for batch items lives in this ref (mutated only inside
   // handlers); setDumpItems mirrors it into state for rendering.
   const dumpItemsRef = useRef<DumpItem[]>([]);
+
+  /** MediaRecorder support is unknowable on the server, so the markup renders
+   * as "no recorder" and settles on the client without a hydration mismatch. */
+  const canRecord = useSyncExternalStore(
+    subscribeNever,
+    recorderSupported,
+    () => false,
+  );
 
   // Restore lightweight draft fields after hydration (never media bytes).
   useEffect(() => {
@@ -234,8 +257,13 @@ export function GuestbookApp({
 
       setInspecting(true);
       let durationSeconds: number | null = null;
+      let width: number | null = null;
+      let height: number | null = null;
       if (mediaType === "video") {
-        durationSeconds = await readVideoDuration(file);
+        const meta = await readVideoMetadata(file);
+        durationSeconds = meta.durationSeconds;
+        width = meta.width;
+        height = meta.height;
         if (
           durationSeconds != null &&
           durationSeconds >
@@ -265,6 +293,8 @@ export function GuestbookApp({
           mediaType,
           previewUrl: URL.createObjectURL(file),
           durationSeconds,
+          width,
+          height,
           submissionId: crypto.randomUUID(),
         };
       });
@@ -280,6 +310,8 @@ export function GuestbookApp({
       file: File;
       mediaType: GuestbookMediaType;
       durationSeconds: number | null;
+      width: number | null;
+      height: number | null;
       kind: "message" | "event_media";
       forEvent: GuestbookEvent;
       thumb: Blob | null;
@@ -297,6 +329,8 @@ export function GuestbookApp({
           mimeType: opts.file.type || "application/octet-stream",
           fileSize: opts.file.size,
           durationSeconds: opts.durationSeconds,
+          videoWidth: opts.width,
+          videoHeight: opts.height,
           guestName: guestName || undefined,
           message: message || undefined,
           thumbnail:
@@ -331,6 +365,8 @@ export function GuestbookApp({
       file: File;
       mediaType: GuestbookMediaType;
       durationSeconds: number | null;
+      width: number | null;
+      height: number | null;
       kind: "message" | "event_media";
       forEvent: GuestbookEvent;
       thumb: Blob | null;
@@ -404,6 +440,8 @@ export function GuestbookApp({
         file: media.file,
         mediaType: media.mediaType,
         durationSeconds: media.durationSeconds,
+        width: media.width,
+        height: media.height,
         kind: "message",
         forEvent: event,
         thumb: thumbnailRef.current,
@@ -464,6 +502,8 @@ export function GuestbookApp({
         mediaType: mediaType ?? "photo",
         previewUrl: null,
         durationSeconds: null,
+        width: null,
+        height: null,
         status: "ready",
         note: null,
         sentBytes: 0,
@@ -491,8 +531,13 @@ export function GuestbookApp({
       }
 
       let durationSeconds: number | null = null;
+      let width: number | null = null;
+      let height: number | null = null;
       if (mediaType === "video") {
-        durationSeconds = await readVideoDuration(file);
+        const meta = await readVideoMetadata(file);
+        durationSeconds = meta.durationSeconds;
+        width = meta.width;
+        height = meta.height;
         if (
           durationSeconds != null &&
           durationSeconds >
@@ -501,6 +546,8 @@ export function GuestbookApp({
           additions.push({
             ...base,
             durationSeconds,
+            width,
+            height,
             status: "rejected",
             note: "Longer than 15 minutes",
           });
@@ -513,6 +560,12 @@ export function GuestbookApp({
         ...base,
         mediaType,
         durationSeconds,
+        width,
+        height,
+        // Low-res files still upload — the note is advisory, not a rejection.
+        note: isLowResolution(width, height)
+          ? `${formatResolution(width, height)} — a compressed copy`
+          : null,
         previewUrl: mediaType === "photo" ? URL.createObjectURL(file) : null,
       });
     }
@@ -580,6 +633,8 @@ export function GuestbookApp({
           file: item.file,
           mediaType: item.mediaType,
           durationSeconds: item.durationSeconds,
+          width: item.width,
+          height: item.height,
           kind: "event_media",
           forEvent: dumpEvent,
           thumb,
@@ -679,6 +734,17 @@ export function GuestbookApp({
             ? "Your memories were saved. Thank you."
             : ""}
       </p>
+
+      {recording && (
+        <VideoRecorder
+          maxSeconds={MAX_VIDEO_DURATION_SECONDS}
+          onCancel={() => setRecording(false)}
+          onComplete={(file) => {
+            setRecording(false);
+            void handleFile(file, "video");
+          }}
+        />
+      )}
 
       {/* Hidden pickers */}
       <input
@@ -855,7 +921,11 @@ export function GuestbookApp({
               <motion.button
                 type="button"
                 whileTap={reducedMotion ? undefined : { scale: 0.96 }}
-                onClick={() => recordInputRef.current?.click()}
+                onClick={() =>
+                  canRecord
+                    ? setRecording(true)
+                    : recordInputRef.current?.click()
+                }
                 disabled={inspecting}
                 className="group flex flex-col items-center gap-3 disabled:opacity-50"
               >
@@ -870,7 +940,7 @@ export function GuestbookApp({
                   Record a Video
                 </span>
                 <span className="type-caps -mt-2 text-[0.58rem] text-ink-soft">
-                  Up to 2 minutes
+                  Up to 2 minutes{canRecord ? " · HD" : ""}
                 </span>
               </motion.button>
 
@@ -940,8 +1010,42 @@ export function GuestbookApp({
                   </span>
                 )}
                 <span className="tabular">{formatBytes(media.file.size)}</span>
+                {formatResolution(media.width, media.height) && (
+                  <span
+                    className={`tabular ${
+                      isLowResolution(media.width, media.height)
+                        ? "text-error"
+                        : ""
+                    }`}
+                  >
+                    {formatResolution(media.width, media.height)}
+                  </span>
+                )}
               </div>
             </div>
+
+            {isLowResolution(media.width, media.height) && (
+              <div className="mt-4 rounded-sm border border-error/30 bg-error/5 px-4 py-3">
+                <p className="text-sm text-ink">
+                  This copy is only{" "}
+                  {formatResolution(media.width, media.height)}. It looks like a
+                  version that&rsquo;s been shared through WhatsApp or
+                  Instagram, which compresses video heavily.
+                </p>
+                <p className="mt-2 text-sm text-ink-soft">
+                  If the original is still in your camera roll, sharing that
+                  instead will look far sharper ({MIN_VIDEO_SHORT_EDGE}p or
+                  better). Otherwise this is perfectly fine to send.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  className="type-caps mt-3 text-[0.6rem] text-blue-deep underline underline-offset-4"
+                >
+                  Pick a different video
+                </button>
+              </div>
+            )}
 
             <div className="mt-7 flex flex-col gap-5">
               <div>

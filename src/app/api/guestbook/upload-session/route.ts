@@ -74,6 +74,8 @@ export async function POST(request: Request) {
       mime_type: input.mimeType.toLowerCase(),
       file_size: input.fileSize,
       duration_seconds: input.durationSeconds ?? null,
+      video_width: input.videoWidth ?? null,
+      video_height: input.videoHeight ?? null,
     });
     if (!entry) {
       return NextResponse.json(

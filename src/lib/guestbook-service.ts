@@ -24,6 +24,8 @@ export interface GuestbookEntry {
   mime_type: string | null;
   file_size: number | null;
   duration_seconds: number | null;
+  video_width: number | null;
+  video_height: number | null;
   status: "pending" | "uploading" | "complete" | "failed" | "deleted";
   favorite: boolean;
   created_at: string;
@@ -50,6 +52,8 @@ export async function upsertPendingEntry(fields: {
   mime_type: string;
   file_size: number;
   duration_seconds: number | null;
+  video_width?: number | null;
+  video_height?: number | null;
 }): Promise<GuestbookEntry | null> {
   const db = supabaseAdmin();
 
@@ -70,6 +74,8 @@ export async function upsertPendingEntry(fields: {
       fields.duration_seconds == null
         ? null
         : Math.round(fields.duration_seconds),
+    video_width: fields.video_width ?? null,
+    video_height: fields.video_height ?? null,
     status: "uploading" as const,
   };
 
@@ -78,8 +84,38 @@ export async function upsertPendingEntry(fields: {
     .upsert(row, { onConflict: "client_submission_id" })
     .select("*")
     .single();
+
+  // The resolution columns arrived in a later migration. If a deploy lands
+  // ahead of that SQL, drop them and save the memory anyway — losing a guest's
+  // upload over an analytics field would be a terrible trade.
+  if (error && isMissingColumnError(error, ["video_width", "video_height"])) {
+    console.warn(
+      "guestbook: video resolution columns missing — apply migration 20260916000001",
+    );
+    const { video_width: _w, video_height: _h, ...legacyRow } = row;
+    const retry = await db
+      .from("guestbook_entries")
+      .upsert(legacyRow, { onConflict: "client_submission_id" })
+      .select("*")
+      .single();
+    if (retry.error) {
+      throw new Error(`guestbook upsert failed: ${retry.error.message}`);
+    }
+    return retry.data as GuestbookEntry;
+  }
+
   if (error) throw new Error(`guestbook upsert failed: ${error.message}`);
   return data as GuestbookEntry;
+}
+
+/** PostgREST reports an unknown column as PGRST204 naming the column. */
+function isMissingColumnError(
+  error: { code?: string; message?: string },
+  columns: string[],
+): boolean {
+  if (error.code !== "PGRST204") return false;
+  const message = error.message ?? "";
+  return columns.some((c) => message.includes(c));
 }
 
 export async function getEntryBySubmissionId(

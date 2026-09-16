@@ -21,6 +21,23 @@ export const VIDEO_DURATION_TOLERANCE_SECONDS = 1;
 
 /** 500 MB — network reliability is the constraint, not storage. */
 export const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+
+/**
+ * Quality floor. Phone video is usually portrait (1080x1920), so the SHORT
+ * edge is the meaningful dimension — 720 means "720p or better" for both
+ * orientations. Below this we warn the guest that they picked a recompressed
+ * copy (WhatsApp/Instagram exports land around 480x854) but still let them
+ * through: a low-res memory beats a lost one.
+ */
+export const MIN_VIDEO_SHORT_EDGE = 720;
+
+/** What the in-browser recorder asks the camera for: 1080p, capped there. */
+export const TARGET_RECORD_WIDTH = 1920;
+export const TARGET_RECORD_HEIGHT = 1080;
+
+/** ~8 Mbps keeps 1080p crisp without bloating uploads on venue Wi-Fi. */
+export const RECORD_VIDEO_BITS_PER_SECOND = 8_000_000;
+export const RECORD_AUDIO_BITS_PER_SECOND = 128_000;
 /** 25 MB covers every phone photo including multi-frame HEIC. */
 export const MAX_PHOTO_BYTES = 25 * 1024 * 1024;
 /** Admin-gallery thumbnails are small WebP/JPEG frames. */
@@ -72,6 +89,42 @@ export function isAllowedMime(
 
 export function maxBytesFor(mediaType: GuestbookMediaType): number {
   return mediaType === "video" ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
+}
+
+/** The smaller of the two dimensions — orientation-independent quality. */
+export function videoShortEdge(
+  width: number | null | undefined,
+  height: number | null | undefined,
+): number | null {
+  if (!width || !height || width <= 0 || height <= 0) return null;
+  return Math.min(width, height);
+}
+
+/** True only when we positively know the video is below the floor. An
+ * undecodable file (HEVC in some browsers) reports nothing and is never
+ * flagged — we don't nag guests over a measurement we couldn't take. */
+export function isLowResolution(
+  width: number | null | undefined,
+  height: number | null | undefined,
+): boolean {
+  const edge = videoShortEdge(width, height);
+  return edge != null && edge < MIN_VIDEO_SHORT_EDGE;
+}
+
+/** "1080p", "4K", "480p" — labelled by short edge, as video conventionally is. */
+export function formatResolution(
+  width: number | null | undefined,
+  height: number | null | undefined,
+): string | null {
+  const edge = videoShortEdge(width, height);
+  if (edge == null) return null;
+  if (edge >= 2160) return "4K";
+  if (edge >= 1440) return "1440p";
+  if (edge >= 1080) return "1080p";
+  if (edge >= 720) return "720p";
+  if (edge >= 480) return "480p";
+  if (edge >= 360) return "360p";
+  return `${edge}p`;
 }
 
 const EXTENSION_BY_MIME: Record<string, string> = {
