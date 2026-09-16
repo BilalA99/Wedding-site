@@ -36,8 +36,8 @@ describe("isAllowedMime", () => {
 });
 
 describe("maxBytesFor", () => {
-  it("is 500 MB for video and 25 MB for photo", () => {
-    expect(maxBytesFor("video")).toBe(500 * 1024 * 1024);
+  it("is 5 GB for video and 25 MB for photo", () => {
+    expect(maxBytesFor("video")).toBe(5 * 1024 * 1024 * 1024);
     expect(maxBytesFor("photo")).toBe(25 * 1024 * 1024);
   });
 });
@@ -118,6 +118,12 @@ describe("isLowResolution", () => {
     expect(isLowResolution(1080, 1920)).toBe(false);
     expect(isLowResolution(1280, 720)).toBe(false);
     expect(isLowResolution(3840, 2160)).toBe(false);
+  });
+
+  it("treats exactly 720 as HD — the boundary is < not <=", () => {
+    expect(isLowResolution(1280, 720)).toBe(false);
+    expect(isLowResolution(720, 1280)).toBe(false);
+    expect(isLowResolution(1279, 719)).toBe(true);
   });
 
   it("never flags a file it could not measure", () => {

@@ -280,6 +280,15 @@ export function GuestbookApp({
           );
           return;
         }
+        // HD only. A file the browser could not decode reports no dimensions
+        // and is never turned away on a measurement we failed to take.
+        if (isLowResolution(width, height)) {
+          setInspecting(false);
+          setError(
+            `This copy is only ${formatResolution(width, height)} — it's been compressed by WhatsApp or Instagram. Please share the original from your camera roll (${MIN_VIDEO_SHORT_EDGE}p or better), or record a new one.`,
+          );
+          return;
+        }
       }
 
       // Thumbnail generation starts now so it's ready before upload.
@@ -525,17 +534,14 @@ export function GuestbookApp({
           probing: false,
         };
 
-        const tooLong =
-          meta.durationSeconds != null &&
-          meta.durationSeconds >
-            maxDurationFor("event_media") + VIDEO_DURATION_TOLERANCE_SECONDS;
-
-        // Only a file that has not started uploading can still be turned away.
-        if (tooLong && after.status === "ready") {
+        // Event clips are uncapped in length — a whole speech or first dance is
+        // exactly what this lane is for. Quality is the one bar they must clear:
+        // HD only, and only when we positively measured it (an undecodable file
+        // reports nothing and is never turned away on a failed measurement).
+        // A file already uploading is past the point of being turned away.
+        if (isLowResolution(meta.width, meta.height) && after.status === "ready") {
           patch.status = "rejected";
-          patch.note = "Longer than 15 minutes";
-        } else if (isLowResolution(meta.width, meta.height)) {
-          patch.note = `${formatResolution(meta.width, meta.height)} — a compressed copy`;
+          patch.note = `${formatResolution(meta.width, meta.height)} — needs HD`;
         }
 
         updateItem(item.submissionId, patch);
@@ -1063,28 +1069,6 @@ export function GuestbookApp({
               </div>
             </div>
 
-            {isLowResolution(media.width, media.height) && (
-              <div className="mt-4 rounded-sm border border-error/30 bg-error/5 px-4 py-3">
-                <p className="text-sm text-ink">
-                  This copy is only{" "}
-                  {formatResolution(media.width, media.height)}. It looks like a
-                  version that&rsquo;s been shared through WhatsApp or
-                  Instagram, which compresses video heavily.
-                </p>
-                <p className="mt-2 text-sm text-ink-soft">
-                  If the original is still in your camera roll, sharing that
-                  instead will look far sharper ({MIN_VIDEO_SHORT_EDGE}p or
-                  better). Otherwise this is perfectly fine to send.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => videoInputRef.current?.click()}
-                  className="type-caps mt-3 text-[0.6rem] text-blue-deep underline underline-offset-4"
-                >
-                  Pick a different video
-                </button>
-              </div>
-            )}
 
             <div className="mt-7 flex flex-col gap-5">
               <div>
@@ -1267,7 +1251,7 @@ export function GuestbookApp({
                   Add Photos &amp; Videos
                 </span>
                 <span className="type-caps text-[0.58rem] text-ink-soft">
-                  Up to {MAX_BATCH_ITEMS} at a time · videos up to 15 min
+                  Up to {MAX_BATCH_ITEMS} at a time · full-length videos welcome
                 </span>
               </button>
             ) : (

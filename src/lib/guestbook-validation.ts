@@ -7,9 +7,12 @@ import {
   MAX_GUEST_NAME_LENGTH,
   MAX_MESSAGE_LENGTH,
   MAX_THUMBNAIL_BYTES,
+  MIN_VIDEO_SHORT_EDGE,
   THUMBNAIL_MIME_TYPES,
   VIDEO_DURATION_TOLERANCE_SECONDS,
+  formatResolution,
   isAllowedMime,
+  isLowResolution,
   maxBytesFor,
   maxDurationFor,
 } from "@/lib/guestbook-shared";
@@ -68,19 +71,31 @@ export const uploadSessionSchema = z
         message: "This file is too large.",
       });
     }
+    // Event media is deliberately uncapped, so maxDurationFor returns null
+    // there and only the 2-minute message rule is enforced.
+    const maxDuration = maxDurationFor(val.kind);
     if (
       val.mediaType === "video" &&
+      maxDuration != null &&
       val.durationSeconds != null &&
-      val.durationSeconds >
-        maxDurationFor(val.kind) + VIDEO_DURATION_TOLERANCE_SECONDS
+      val.durationSeconds > maxDuration + VIDEO_DURATION_TOLERANCE_SECONDS
     ) {
       ctx.addIssue({
         code: "custom",
         path: ["durationSeconds"],
-        message:
-          val.kind === "event_media"
-            ? "This video is longer than 15 minutes."
-            : "This video is longer than 2 minutes.",
+        message: "This video is longer than 2 minutes.",
+      });
+    }
+    // HD only. Dimensions are client-measured and optional — absent means the
+    // browser could not decode the file, which must not count against it.
+    if (
+      val.mediaType === "video" &&
+      isLowResolution(val.videoWidth, val.videoHeight)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["videoWidth"],
+        message: `This video is only ${formatResolution(val.videoWidth, val.videoHeight)} — please share the original in ${MIN_VIDEO_SHORT_EDGE}p or better.`,
       });
     }
   });

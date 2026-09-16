@@ -66,9 +66,21 @@ describe("uploadSessionSchema", () => {
   it("rejects oversized videos", () => {
     const result = uploadSessionSchema.safeParse({
       ...base,
-      fileSize: 501 * 1024 * 1024,
+      fileSize: 5 * 1024 * 1024 * 1024 + 1,
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts a multi-gigabyte video below the cap", () => {
+    // Event media is uncapped in length, so the byte cap must be roomy enough
+    // that it does not quietly reimpose a duration limit.
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        kind: "event_media",
+        fileSize: 3 * 1024 * 1024 * 1024,
+      }).success,
+    ).toBe(true);
   });
 
   it("rejects oversized photos at the photo cap", () => {
@@ -196,21 +208,58 @@ describe("uploadSessionSchema — lanes and batches", () => {
     if (result.success) expect(result.data.kind).toBe("message");
   });
 
-  it("event_media allows clips longer than 2 minutes (up to 15)", () => {
+  it("event_media is uncapped in length", () => {
+    for (const durationSeconds of [600, 905, 3600, 7200]) {
+      expect(
+        uploadSessionSchema.safeParse({
+          ...base,
+          kind: "event_media",
+          durationSeconds,
+        }).success,
+      ).toBe(true);
+    }
+  });
+
+  it("messages still cap at 2 minutes", () => {
     expect(
-      uploadSessionSchema.safeParse({
-        ...base,
-        kind: "event_media",
-        durationSeconds: 600,
-      }).success,
+      uploadSessionSchema.safeParse({ ...base, durationSeconds: 119 }).success,
     ).toBe(true);
     expect(
+      uploadSessionSchema.safeParse({ ...base, durationSeconds: 300 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects video measured below the HD floor, in either orientation", () => {
+    for (const [videoWidth, videoHeight] of [
+      [848, 480],
+      [480, 848],
+      [640, 360],
+    ]) {
+      expect(
+        uploadSessionSchema.safeParse({ ...base, videoWidth, videoHeight })
+          .success,
+      ).toBe(false);
+    }
+  });
+
+  it("accepts HD video and anything it could not measure", () => {
+    expect(
       uploadSessionSchema.safeParse({
         ...base,
-        kind: "event_media",
-        durationSeconds: 905,
+        videoWidth: 1080,
+        videoHeight: 1920,
       }).success,
-    ).toBe(false);
+    ).toBe(true);
+    // Undecodable file (HEVC in some browsers) reports no dimensions — it must
+    // never be punished for a measurement the client could not take.
+    expect(uploadSessionSchema.safeParse({ ...base }).success).toBe(true);
+    expect(
+      uploadSessionSchema.safeParse({
+        ...base,
+        videoWidth: null,
+        videoHeight: null,
+      }).success,
+    ).toBe(true);
   });
 
   it("message lane still enforces the 2-minute rule", () => {

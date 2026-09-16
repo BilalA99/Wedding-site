@@ -14,20 +14,29 @@ export type GuestbookKind = (typeof GUESTBOOK_KINDS)[number];
 
 /** Hard product rule: video MESSAGES max out at 2 minutes. */
 export const MAX_VIDEO_DURATION_SECONDS = 120;
-/** Event clips can run longer — capped at 15 minutes. */
-export const MAX_EVENT_VIDEO_DURATION_SECONDS = 15 * 60;
+/** Event clips run as long as they run — Drive has the room, and a speech or
+ * a first dance is exactly the thing worth keeping whole. */
+export const MAX_EVENT_VIDEO_DURATION_SECONDS = null;
 /** Slack for container metadata rounding (e.g. 120.4s recorded clips). */
 export const VIDEO_DURATION_TOLERANCE_SECONDS = 1;
 
-/** 500 MB — network reliability is the constraint, not storage. */
-export const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+/** 5 GB. Storage is not the constraint (Drive holds 5 TB) and neither is the
+ * server — bytes go browser→Drive in 8 MiB chunks and never touch a function.
+ * This exists only so a mis-picked file can't start a hopeless upload; with
+ * the duration cap gone it must be large enough not to become one by proxy
+ * (4K/60 runs ~400 MB per minute). */
+export const MAX_VIDEO_BYTES = 5 * 1024 * 1024 * 1024;
 
 /**
- * Quality floor. Phone video is usually portrait (1080x1920), so the SHORT
- * edge is the meaningful dimension — 720 means "720p or better" for both
- * orientations. Below this we warn the guest that they picked a recompressed
- * copy (WhatsApp/Instagram exports land around 480x854) but still let them
- * through: a low-res memory beats a lost one.
+ * Quality floor, enforced. Phone video is usually portrait (1080x1920), so the
+ * SHORT edge is the meaningful dimension — 720 means "720p or better" in both
+ * orientations. Recompressed shares (WhatsApp/Instagram exports land around
+ * 480x854) are turned away rather than warned about: these are the wedding
+ * videos, and a guest can almost always re-share the camera-roll original.
+ *
+ * Only a video we positively measured is rejected. A file the browser cannot
+ * decode reports no dimensions and always passes — never punish a measurement
+ * we failed to take.
  */
 export const MIN_VIDEO_SHORT_EDGE = 720;
 
@@ -53,7 +62,8 @@ export const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024;
 /** One "Share Photos & Videos" batch is capped at 30 files. */
 export const MAX_BATCH_ITEMS = 30;
 
-export function maxDurationFor(kind: GuestbookKind): number {
+/** null means "no limit" — event media is deliberately uncapped. */
+export function maxDurationFor(kind: GuestbookKind): number | null {
   return kind === "event_media"
     ? MAX_EVENT_VIDEO_DURATION_SECONDS
     : MAX_VIDEO_DURATION_SECONDS;
